@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
@@ -6,6 +7,99 @@ import 'package:flame/game.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/particles.dart';
 import 'package:flutter/material.dart';
+
+// Target configurations with icons and colors
+class TargetConfig {
+  final IconData icon;
+  final Color color;
+  final int value;
+  final double duration;
+  final bool isPositive;
+  final double size; // Icon size
+
+  const TargetConfig({
+    required this.icon,
+    required this.color,
+    required this.value,
+    required this.duration,
+    required this.isPositive,
+    required this.size,
+  });
+}
+
+// All available targets
+class TargetConfigs {
+  // Positive targets (sorted by value) - Higher value = bigger
+  static const List<TargetConfig> positive = [
+    TargetConfig(icon: Icons.favorite, color: Color(0xFFE91E63), value: 10, duration: 2.0, isPositive: true, size: 36),       // Heart - Small
+    TargetConfig(icon: Icons.star, color: Color(0xFFFFEB3B), value: 20, duration: 1.7, isPositive: true, size: 44),           // Star
+    TargetConfig(icon: Icons.auto_awesome, color: Color(0xFF00BCD4), value: 30, duration: 1.4, isPositive: true, size: 52),   // Sparkle
+    TargetConfig(icon: Icons.emoji_events, color: Color(0xFFFF9800), value: 40, duration: 1.1, isPositive: true, size: 60),   // Trophy
+    TargetConfig(icon: Icons.diamond, color: Color(0xFF9C27B0), value: 50, duration: 0.8, isPositive: true, size: 68),        // Diamond - Big
+  ];
+
+  // Negative targets (sorted by value) - Higher penalty = bigger (easier to accidentally hit!)
+  static const List<TargetConfig> negative = [
+    TargetConfig(icon: Icons.cancel, color: Color(0xFFE53935), value: -10, duration: 2.5, isPositive: false, size: 40),                  // Red X - Small
+    TargetConfig(icon: Icons.dangerous, color: Color(0xFFFF5722), value: -20, duration: 2.2, isPositive: false, size: 52),               // Skull/Danger
+    TargetConfig(icon: Icons.local_fire_department, color: Color(0xFFD32F2F), value: -30, duration: 1.9, isPositive: false, size: 64),   // Fire - Big
+  ];
+}
+
+// Component that renders a Material Icon in Flame
+class IconComponent extends PositionComponent {
+  final IconData icon;
+  final Color color;
+  final double iconSize;
+  ui.Picture? _cachedPicture;
+  
+  IconComponent({
+    required this.icon,
+    required this.color,
+    this.iconSize = 48,
+    super.position,
+    super.anchor,
+    super.priority,
+  }) : super(size: Vector2.all(iconSize));
+
+  @override
+  Future<void> onLoad() async {
+    // Pre-render the icon to a picture for better performance
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: String.fromCharCode(icon.codePoint),
+        style: TextStyle(
+          fontSize: iconSize,
+          fontFamily: icon.fontFamily,
+          package: icon.fontPackage,
+          color: color,
+          shadows: [
+            Shadow(
+              color: Colors.black.withOpacity(0.3),
+              offset: const Offset(2, 2),
+              blurRadius: 4,
+            ),
+          ],
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+    textPainter.paint(canvas, Offset.zero);
+    
+    _cachedPicture = recorder.endRecording();
+  }
+
+  @override
+  void render(Canvas canvas) {
+    if (_cachedPicture != null) {
+      canvas.drawPicture(_cachedPicture!);
+    }
+  }
+}
 
 // Types of targets
 enum TargetType { positive, negative }
@@ -75,10 +169,12 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
     return false;
   }
 
-  late SpriteComponent paw;
+  late PositionComponent paw;
   late TimerComponent gameTimer;
+  late TextComponent comboText;
   int score = 0;
   double timeLeft = 60;
+  int combo = 0; // Consecutive positive hits
   final void Function(int, double, bool) onGameUpdate;
   final void Function() onResetRequest;
   final void Function(int score, double timeLeft) onFinishRequest;
@@ -90,13 +186,12 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
 
   @override
   Future<void> onLoad() async {
-    // Paw is invisible in game but used for collision detection
-    paw = SpriteComponent()
-      ..sprite = await loadSprite('paw.png')
-      ..size = Vector2(64, 64)
-      ..position = size / 2
-      ..priority = -1; // Hidden - visual paw is rendered by Flutter overlay
-    paw.opacity = 0; // Make invisible since Flutter overlay handles visual
+    // Invisible paw hitbox for collision detection only (Flutter overlay shows the visual paw)
+    paw = PositionComponent(
+      size: Vector2(64, 64),
+      position: size / 2,
+      priority: -100,
+    );
     add(paw);
 
     // Score Text
@@ -108,6 +203,16 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
       textRenderer: TextPaint(style: const TextStyle(fontSize: 24, color: Colors.amber, fontWeight: FontWeight.bold)),
     );
     add(scoreText);
+
+    // Combo Text
+    comboText = TextComponent(
+      text: '',
+      position: Vector2(20, 88),
+      anchor: Anchor.topLeft,
+      priority: 10,
+      textRenderer: TextPaint(style: const TextStyle(fontSize: 20, color: Colors.orangeAccent, fontWeight: FontWeight.bold)),
+    );
+    add(comboText);
 
     // Timer Text
     timerText = TextComponent(
@@ -180,9 +285,11 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
   void resetGame() {
     stopped = false;
     score = 0;
+    combo = 0;
     timeLeft = gameDuration.toDouble();
     scoreText.text = 'Score: 0';
     timerText.text = 'Time: $gameDuration';
+    comboText.text = '';
     for (final t in List<Target>.from(targets)) {
       t.removeFromParent();
     }
@@ -220,39 +327,65 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
 
   void _spawnTarget() {
     if (stopped || timeLeft <= 0) return;
-    final type = _rand.nextDouble() < 0.7 ? TargetType.positive : TargetType.negative;
-    final value = type == TargetType.positive ? (_rand.nextInt(3) + 1) * 10 : -(_rand.nextInt(2) + 1) * 10;
-    double duration;
-    if (type == TargetType.positive) {
-      if (value == 10) {
-        duration = 2.0;
-      } else if (value == 20) {
-        duration = 1.5;
+    
+    // 70% chance for positive, 30% for negative
+    final isPositive = _rand.nextDouble() < 0.7;
+    
+    TargetConfig config;
+    if (isPositive) {
+      // Weighted random: lower values more common
+      // 40% +10, 25% +20, 18% +30, 12% +40, 5% +50
+      final roll = _rand.nextDouble();
+      if (roll < 0.40) {
+        config = TargetConfigs.positive[0]; // +10 Heart
+      } else if (roll < 0.65) {
+        config = TargetConfigs.positive[1]; // +20 Star
+      } else if (roll < 0.83) {
+        config = TargetConfigs.positive[2]; // +30 Sparkle
+      } else if (roll < 0.95) {
+        config = TargetConfigs.positive[3]; // +40 Trophy
       } else {
-        duration = 1.0;
+        config = TargetConfigs.positive[4]; // +50 Diamond (rare!)
       }
     } else {
-      duration = 2.5;
+      // Weighted random for negative: -10 most common
+      // 50% -10, 35% -20, 15% -30
+      final roll = _rand.nextDouble();
+      if (roll < 0.50) {
+        config = TargetConfigs.negative[0]; // -10 Water
+      } else if (roll < 0.85) {
+        config = TargetConfigs.negative[1]; // -20 Bug
+      } else {
+        config = TargetConfigs.negative[2]; // -30 Lightning
+      }
     }
+    
     final target = Target(
-      type: type,
-      value: value,
-      duration: duration,
+      config: config,
       position: Vector2(
-        _rand.nextDouble() * (size.x - 48),
-        _rand.nextDouble() * (size.y - 48),
+        _rand.nextDouble() * (size.x - config.size),
+        _rand.nextDouble() * (size.y - config.size),
       ),
       onHit: _onTargetHit,
     );
     add(target);
     targets.add(target);
     add(TimerComponent(
-      period: duration,
+      period: config.duration,
       removeOnFinish: true,
       onTick: () {
-        if (!stopped && targets.contains(target)) {
-          target.removeFromParent();
-          targets.remove(target);
+        if (!stopped && targets.contains(target) && !target.isHit) {
+          // Fade out animation when time expires
+          target.add(
+            ScaleEffect.to(
+              Vector2.all(0.3),
+              EffectController(duration: 0.2, curve: Curves.easeIn),
+              onComplete: () {
+                target.removeFromParent();
+                targets.remove(target);
+              },
+            ),
+          );
         }
       },
     ));
@@ -263,16 +396,51 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
     target.isHit = true;
     
     final hitPosition = target.position + target.size / 2;
-    final isPositive = target.type == TargetType.positive;
+    final isPositive = target.config.isPositive;
     
-    score += target.value;
+    // Calculate combo bonus
+    int bonus = 0;
+    int totalValue = target.config.value;
+    
+    if (isPositive) {
+      combo++;
+      // Apply combo bonus: 5+ hits = +10, 10+ hits = +50
+      if (combo >= 10) {
+        bonus = 50;
+      } else if (combo >= 5) {
+        bonus = 10;
+      }
+      totalValue += bonus;
+      
+      // Update combo display
+      if (combo >= 5) {
+        final comboLevel = combo >= 10 ? '🔥 SUPER COMBO' : '⭐ COMBO';
+        comboText.text = '$comboLevel x$combo (+$bonus)';
+        comboText.textRenderer = TextPaint(
+          style: TextStyle(
+            fontSize: combo >= 10 ? 22 : 20,
+            color: combo >= 10 ? Colors.deepOrange : Colors.orangeAccent,
+            fontWeight: FontWeight.bold,
+          ),
+        );
+      } else {
+        comboText.text = combo > 1 ? 'x$combo' : '';
+      }
+    } else {
+      // Negative target breaks the combo
+      if (combo >= 5) {
+        _spawnComboLostText(hitPosition);
+      }
+      combo = 0;
+      comboText.text = '';
+    }
+    
+    score += totalValue;
     scoreText.text = 'Score: $score';
     onGameUpdate(score, timeLeft, false);
     
-    // Material Design color scheme
-    final particleColor = isPositive 
-        ? const Color(0xFF4CAF50)  // Material Green
-        : const Color(0xFFF44336); // Material Red
+    // Use target's color for particles, or default Material colors
+    final particleColor = target.config.color;
     final scoreColor = isPositive
         ? const Color(0xFF81C784)  // Light Green
         : const Color(0xFFE57373); // Light Red
@@ -295,8 +463,8 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
     // 2. Particle burst effect
     _spawnHitParticles(hitPosition, particleColor);
     
-    // 3. Floating score text
-    _spawnFloatingScore(hitPosition, target.value, scoreColor);
+    // 3. Floating score text with combo bonus
+    _spawnFloatingScore(hitPosition, target.config.value, scoreColor, bonus);
     
     // 4. Screen shake for negative hits (subtle feedback)
     if (!isPositive) {
@@ -369,17 +537,21 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
     );
   }
   
-  void _spawnFloatingScore(Vector2 position, int value, Color color) {
+  void _spawnFloatingScore(Vector2 position, int value, Color color, [int bonus = 0]) {
     final scoreSign = value >= 0 ? '+' : '';
+    String text = '$scoreSign$value';
+    if (bonus > 0) {
+      text += ' +$bonus';
+    }
     final floatingText = TextComponent(
-      text: '$scoreSign$value',
+      text: text,
       position: position.clone(),
       anchor: Anchor.center,
       textRenderer: TextPaint(
         style: TextStyle(
-          fontSize: 24,
+          fontSize: bonus > 0 ? 28 : 24,
           fontWeight: FontWeight.bold,
-          color: color,
+          color: bonus > 0 ? Colors.orange : color,
           shadows: [
             Shadow(
               color: Colors.black.withOpacity(0.5),
@@ -419,6 +591,58 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
     floatingText.add(
       RemoveEffect(
         delay: 0.6,
+      ),
+    );
+  }
+  
+  void _spawnComboLostText(Vector2 position) {
+    final lostText = TextComponent(
+      text: 'COMBO LOST!',
+      position: position.clone(),
+      anchor: Anchor.center,
+      textRenderer: TextPaint(
+        style: TextStyle(
+          fontSize: 26,
+          fontWeight: FontWeight.bold,
+          color: Colors.red.shade300,
+          shadows: [
+            Shadow(
+              color: Colors.black.withOpacity(0.7),
+              offset: const Offset(2, 2),
+              blurRadius: 4,
+            ),
+          ],
+        ),
+      ),
+      priority: 100,
+    );
+    
+    add(lostText);
+    
+    // Float up with shake effect
+    lostText.add(
+      MoveByEffect(
+        Vector2(0, -60),
+        EffectController(
+          duration: 0.8,
+          curve: Curves.easeOutCubic,
+        ),
+      ),
+    );
+    lostText.add(
+      ScaleEffect.to(
+        Vector2.all(1.5),
+        EffectController(
+          duration: 0.2,
+          curve: Curves.elasticOut,
+          reverseDuration: 0.6,
+          reverseCurve: Curves.easeIn,
+        ),
+      ),
+    );
+    lostText.add(
+      RemoveEffect(
+        delay: 0.8,
       ),
     );
   }
@@ -492,28 +716,31 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
   }
 }
 
-class Target extends SpriteComponent with TapCallbacks {
-  final TargetType type;
-  final int value;
-  final double duration;
+class Target extends PositionComponent with TapCallbacks {
+  final TargetConfig config;
   final void Function(Target) onHit;
   bool isHit = false; // Prevent multiple hits during animation
   bool _isHovered = false;
 
   Target({
-    required this.type,
-    required this.value,
-    required this.duration,
+    required this.config,
     required Vector2 position,
     required this.onHit,
   }) : super(
     position: position,
-    size: Vector2(48, 48),
+    size: Vector2.all(config.size),
   );
 
   @override
   Future<void> onLoad() async {
-    sprite = await Sprite.load(type == TargetType.positive ? 'target_good.png' : 'target_bad.png');
+    // Add the icon component with size from config
+    add(IconComponent(
+      icon: config.icon,
+      color: config.color,
+      iconSize: config.size,
+      position: Vector2.zero(),
+    ));
+    
     add(RectangleHitbox());
     
     // Add idle floating animation (Material subtle motion)
@@ -525,6 +752,18 @@ class Target extends SpriteComponent with TapCallbacks {
           curve: Curves.easeInOut,
           infinite: true,
           alternate: true,
+        ),
+      ),
+    );
+    
+    // Entry animation - scale in
+    scale = Vector2.all(0);
+    add(
+      ScaleEffect.to(
+        Vector2.all(1.0),
+        EffectController(
+          duration: 0.2,
+          curve: Curves.easeOutBack,
         ),
       ),
     );

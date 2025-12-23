@@ -36,10 +36,17 @@ class _GameScreenState extends State<GameScreen> {
         left: _pawPosition.dx - 32,
         top: _pawPosition.dy - 32,
         child: IgnorePointer(
-          child: Image.asset(
-            'assets/images/paw.png',
-            width: 64,
-            height: 64,
+          child: Icon(
+            Icons.pets,
+            size: 64,
+            color: const Color(0xFFFFC107), // Amber
+            shadows: [
+              Shadow(
+                color: Colors.black.withOpacity(0.4),
+                offset: const Offset(2, 2),
+                blurRadius: 4,
+              ),
+            ],
           ),
         ),
       ),
