@@ -1,8 +1,10 @@
 import 'dart:math';
 import 'package:flame/components.dart';
+import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flame/collisions.dart';
+import 'package:flame/particles.dart';
 import 'package:flutter/material.dart';
 
 // Types of targets
@@ -257,11 +259,193 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
   }
 
   void _onTargetHit(Target target) {
+    if (target.isHit) return; // Prevent multiple hits
+    target.isHit = true;
+    
+    final hitPosition = target.position + target.size / 2;
+    final isPositive = target.type == TargetType.positive;
+    
     score += target.value;
     scoreText.text = 'Score: $score';
     onGameUpdate(score, timeLeft, false);
-    target.removeFromParent();
-    targets.remove(target);
+    
+    // Material Design color scheme
+    final particleColor = isPositive 
+        ? const Color(0xFF4CAF50)  // Material Green
+        : const Color(0xFFF44336); // Material Red
+    final scoreColor = isPositive
+        ? const Color(0xFF81C784)  // Light Green
+        : const Color(0xFFE57373); // Light Red
+    
+    // 1. Target squish effect (Material motion: emphasized decelerate)
+    target.add(
+      ScaleEffect.to(
+        Vector2.all(0.2),
+        EffectController(
+          duration: 0.15,
+          curve: Curves.easeOutCubic, // Material decelerate curve
+        ),
+        onComplete: () {
+          target.removeFromParent();
+          targets.remove(target);
+        },
+      ),
+    );
+    
+    // 2. Particle burst effect
+    _spawnHitParticles(hitPosition, particleColor);
+    
+    // 3. Floating score text
+    _spawnFloatingScore(hitPosition, target.value, scoreColor);
+    
+    // 4. Screen shake for negative hits (subtle feedback)
+    if (!isPositive) {
+      _triggerShake();
+    }
+  }
+  
+  void _spawnHitParticles(Vector2 position, Color color) {
+    final random = Random();
+    add(
+      ParticleSystemComponent(
+        position: position,
+        particle: Particle.generate(
+          count: 12,
+          lifespan: 0.4,
+          generator: (i) {
+            final angle = (i / 12) * 2 * pi + random.nextDouble() * 0.5;
+            final speed = 80 + random.nextDouble() * 60;
+            return AcceleratedParticle(
+              acceleration: Vector2(0, 300), // Gravity
+              speed: Vector2(cos(angle) * speed, sin(angle) * speed),
+              child: ComputedParticle(
+                renderer: (canvas, particle) {
+                  final opacity = (1 - particle.progress).clamp(0.0, 1.0);
+                  final size = 4 * (1 - particle.progress * 0.5);
+                  canvas.drawCircle(
+                    Offset.zero,
+                    size,
+                    Paint()
+                      ..color = color.withOpacity(opacity)
+                      ..style = PaintingStyle.fill,
+                  );
+                },
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    
+    // Add sparkle ring effect
+    add(
+      ParticleSystemComponent(
+        position: position,
+        particle: Particle.generate(
+          count: 8,
+          lifespan: 0.3,
+          generator: (i) {
+            final angle = (i / 8) * 2 * pi;
+            return MovingParticle(
+              from: Vector2.zero(),
+              to: Vector2(cos(angle) * 40, sin(angle) * 40),
+              child: ComputedParticle(
+                renderer: (canvas, particle) {
+                  final opacity = (1 - particle.progress).clamp(0.0, 1.0);
+                  final size = 3 * (1 - particle.progress);
+                  canvas.drawCircle(
+                    Offset.zero,
+                    size,
+                    Paint()
+                      ..color = Colors.white.withOpacity(opacity * 0.8)
+                      ..style = PaintingStyle.fill,
+                  );
+                },
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+  
+  void _spawnFloatingScore(Vector2 position, int value, Color color) {
+    final scoreSign = value >= 0 ? '+' : '';
+    final floatingText = TextComponent(
+      text: '$scoreSign$value',
+      position: position.clone(),
+      anchor: Anchor.center,
+      textRenderer: TextPaint(
+        style: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: color,
+          shadows: [
+            Shadow(
+              color: Colors.black.withOpacity(0.5),
+              offset: const Offset(1, 1),
+              blurRadius: 2,
+            ),
+          ],
+        ),
+      ),
+      priority: 100,
+    );
+    
+    add(floatingText);
+    
+    // Float up with fade (Material motion)
+    floatingText.add(
+      MoveByEffect(
+        Vector2(0, -50),
+        EffectController(
+          duration: 0.6,
+          curve: Curves.easeOutCubic,
+        ),
+      ),
+    );
+    floatingText.add(
+      ScaleEffect.to(
+        Vector2.all(1.3),
+        EffectController(
+          duration: 0.15,
+          curve: Curves.easeOut,
+          reverseDuration: 0.45,
+          reverseCurve: Curves.easeIn,
+        ),
+      ),
+    );
+    // Remove after animation completes
+    floatingText.add(
+      RemoveEffect(
+        delay: 0.6,
+      ),
+    );
+  }
+  
+  // Subtle screen shake for feedback
+  Vector2 _shakeOffset = Vector2.zero();
+  double _shakeTime = 0;
+  
+  void _triggerShake() {
+    _shakeTime = 0.15;
+  }
+  
+  @override
+  void update(double dt) {
+    super.update(dt);
+    if (_shakeTime > 0) {
+      _shakeTime -= dt;
+      final intensity = (_shakeTime / 0.15) * 3;
+      _shakeOffset = Vector2(
+        (Random().nextDouble() - 0.5) * intensity,
+        (Random().nextDouble() - 0.5) * intensity,
+      );
+      camera.viewfinder.position = _shakeOffset;
+    } else if (_shakeOffset != Vector2.zero()) {
+      _shakeOffset = Vector2.zero();
+      camera.viewfinder.position = Vector2.zero();
+    }
   }
 
   void endGame() {
@@ -313,6 +497,8 @@ class Target extends SpriteComponent with TapCallbacks {
   final int value;
   final double duration;
   final void Function(Target) onHit;
+  bool isHit = false; // Prevent multiple hits during animation
+  bool _isHovered = false;
 
   Target({
     required this.type,
@@ -329,21 +515,78 @@ class Target extends SpriteComponent with TapCallbacks {
   Future<void> onLoad() async {
     sprite = await Sprite.load(type == TargetType.positive ? 'target_good.png' : 'target_bad.png');
     add(RectangleHitbox());
+    
+    // Add idle floating animation (Material subtle motion)
+    add(
+      MoveByEffect(
+        Vector2(0, -4),
+        EffectController(
+          duration: 0.8,
+          curve: Curves.easeInOut,
+          infinite: true,
+          alternate: true,
+        ),
+      ),
+    );
   }
 
   @override
   void update(double dt) {
     super.update(dt);
+    if (isHit) return; // Don't check collision if already hit
+    
     final parentGame = findGame() as AimCatGame?;
-    if (parentGame != null && parentGame.paw.toRect().overlaps(toRect())) {
-      if (!parentGame.isOverUI(parentGame.paw.position)) {
+    if (parentGame != null) {
+      final pawRect = parentGame.paw.toRect();
+      final targetRect = toRect();
+      final isOverlapping = pawRect.overlaps(targetRect);
+      
+      // Handle hover state for visual feedback
+      if (isOverlapping && !_isHovered && !parentGame.isOverUI(parentGame.paw.position)) {
+        _isHovered = true;
+        _onHoverStart();
+      } else if (!isOverlapping && _isHovered) {
+        _isHovered = false;
+        _onHoverEnd();
+      }
+      
+      // Trigger hit
+      if (isOverlapping && !parentGame.isOverUI(parentGame.paw.position)) {
         onHit(this);
       }
     }
   }
+  
+  void _onHoverStart() {
+    // Quick scale up on hover (Material touch feedback)
+    add(
+      ScaleEffect.to(
+        Vector2.all(1.15),
+        EffectController(
+          duration: 0.1,
+          curve: Curves.easeOut,
+        ),
+      ),
+    );
+  }
+  
+  void _onHoverEnd() {
+    // Return to normal size
+    add(
+      ScaleEffect.to(
+        Vector2.all(1.0),
+        EffectController(
+          duration: 0.1,
+          curve: Curves.easeIn,
+        ),
+      ),
+    );
+  }
 
   @override
   void onTapDown(TapDownEvent event) {
-    onHit(this);
+    if (!isHit) {
+      onHit(this);
+    }
   }
 }
