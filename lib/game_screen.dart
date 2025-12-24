@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flame/game.dart';
 import 'package:flame/components.dart';
 import 'aimcat_game.dart';
@@ -17,41 +18,50 @@ class _GameScreenState extends State<GameScreen> {
   int score = 0;
   double timeLeft = 60;
   bool finished = false;
+  bool _isTouchDevice = false; // Track if using touch input
 
   late AimCatGame _game;
   
   // Global paw cursor
   OverlayEntry? _pawOverlay;
   Offset _pawPosition = const Offset(0, 0);
+  bool _isPawPressed = false; // Track paw press state
+  final GlobalKey<_AnimatedPawState> _pawKey = GlobalKey<_AnimatedPawState>();
 
   void _updatePawPosition(Offset position) {
     _pawPosition = position;
     _pawOverlay?.markNeedsBuild();
   }
 
+  void _triggerPawPress() {
+    _pawKey.currentState?.triggerPress();
+  }
+
   void _showPawOverlay() {
+    // Don't show paw on touch devices
+    if (_isTouchDevice) return;
+    
     _removePawOverlay();
     _pawOverlay = OverlayEntry(
       builder: (context) => Positioned(
         left: _pawPosition.dx - 32,
         top: _pawPosition.dy - 32,
         child: IgnorePointer(
-          child: Icon(
-            Icons.pets,
-            size: 64,
-            color: const Color(0xFFFFC107), // Amber
-            shadows: [
-              Shadow(
-                color: Colors.black.withOpacity(0.4),
-                offset: const Offset(2, 2),
-                blurRadius: 4,
-              ),
-            ],
-          ),
+          child: _AnimatedPaw(key: _pawKey),
         ),
       ),
     );
     Overlay.of(context).insert(_pawOverlay!);
+  }
+
+  void _setTouchMode(bool isTouch) {
+    if (isTouch && !_isTouchDevice) {
+      _isTouchDevice = true;
+      _removePawOverlay();
+    } else if (!isTouch && _isTouchDevice) {
+      _isTouchDevice = false;
+      _showPawOverlay();
+    }
   }
 
   void _removePawOverlay() {
@@ -71,6 +81,9 @@ class _GameScreenState extends State<GameScreen> {
       case 'Baby':
       case 'Toddler':
         duration = 120;
+        break;
+      case 'Grandma':
+        duration = 180;
         break;
       case 'SpeedRun':
         duration = 60;
@@ -110,6 +123,10 @@ class _GameScreenState extends State<GameScreen> {
       onFinishRequest: (finalScore, remainingTime) {
         _showFinishModal(finalScore, remainingTime);
       },
+      onTargetHit: () {
+        // Trigger paw press animation when target is hit
+        _triggerPawPress();
+      },
     );
   }
 
@@ -123,21 +140,19 @@ class _GameScreenState extends State<GameScreen> {
         child: MouseRegion(
           cursor: SystemMouseCursors.none,
           child: AlertDialog(
-            backgroundColor: const Color(0xFF16213e),
-            title: const Text('Reset Game?', style: TextStyle(color: Colors.white)),
-            content: const Text('Are you sure you want to reset? Your current progress will be lost.', style: TextStyle(color: Colors.white70)),
+            title: const Text('Reset Game?'),
+            content: const Text('Are you sure you want to reset? Your current progress will be lost.'),
             actions: [
-              TextButton(
-                style: ButtonStyle(
-                  mouseCursor: WidgetStateProperty.all(SystemMouseCursors.none),
+              FilledButton.tonal(
+                style: const ButtonStyle(
+                  mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.none),
                 ),
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                child: const Text('Cancel'),
               ),
-              ElevatedButton(
-                style: ButtonStyle(
-                  backgroundColor: WidgetStateProperty.all(const Color(0xFFFFB300)),
-                  mouseCursor: WidgetStateProperty.all(SystemMouseCursors.none),
+              FilledButton(
+                style: const ButtonStyle(
+                  mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.none),
                 ),
                 onPressed: () {
                   Navigator.pop(ctx);
@@ -148,7 +163,7 @@ class _GameScreenState extends State<GameScreen> {
                   });
                   _startGame();
                 },
-                child: const Text('Reset', style: TextStyle(color: Colors.black)),
+                child: const Text('Reset'),
               ),
             ],
           ),
@@ -171,54 +186,49 @@ class _GameScreenState extends State<GameScreen> {
         child: MouseRegion(
           cursor: SystemMouseCursors.none,
           child: AlertDialog(
-          backgroundColor: const Color(0xFF16213e),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Row(
             children: [
-              const Icon(Icons.emoji_events, color: Colors.amber, size: 32),
+              Icon(Icons.emoji_events, color: Theme.of(ctx).colorScheme.tertiary, size: 32),
               const SizedBox(width: 12),
-              const Text('Game Over!', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              Text('Game Over!', style: Theme.of(ctx).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
             ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Divider(color: Colors.white24),
+              const Divider(),
               const SizedBox(height: 16),
-              _buildStatRow(Icons.star, 'Final Score', '$finalScore pts', Colors.amber),
+              _buildStatRow(ctx, Icons.star, 'Final Score', '$finalScore pts'),
               const SizedBox(height: 12),
-              _buildStatRow(Icons.timer, 'Time Used', '${timeUsed}s', Colors.cyan),
+              _buildStatRow(ctx, Icons.timer, 'Time Used', '${timeUsed}s'),
               const SizedBox(height: 12),
-              _buildStatRow(Icons.speed, 'Points/Second', accuracy.toStringAsFixed(1), Colors.greenAccent),
+              _buildStatRow(ctx, Icons.speed, 'Points/Second', accuracy.toStringAsFixed(1)),
               const SizedBox(height: 12),
-              _buildStatRow(Icons.sports_esports, 'Game Mode', widget.gameMode, Colors.purpleAccent),
+              _buildStatRow(ctx, Icons.sports_esports, 'Game Mode', widget.gameMode),
               const SizedBox(height: 12),
-              _buildStatRow(Icons.person, 'Player', widget.username, Colors.orangeAccent),
+              _buildStatRow(ctx, Icons.person, 'Player', widget.username),
               const SizedBox(height: 20),
-              const Divider(color: Colors.white24),
+              const Divider(),
             ],
           ),
           actionsAlignment: MainAxisAlignment.spaceEvenly,
           actions: [
-            ElevatedButton.icon(
-              style: ButtonStyle(
-                backgroundColor: WidgetStateProperty.all(Colors.redAccent),
-                padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 20, vertical: 12)),
-                mouseCursor: WidgetStateProperty.all(SystemMouseCursors.none),
+            FilledButton.tonalIcon(
+              style: const ButtonStyle(
+                mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.none),
               ),
               onPressed: () {
                 Navigator.pop(ctx);
                 _removePawOverlay();
                 Navigator.popUntil(context, (route) => route.isFirst);
               },
-              icon: const Icon(Icons.home, color: Colors.white),
-              label: const Text('Quit', style: TextStyle(color: Colors.white)),
+              icon: const Icon(Icons.home),
+              label: const Text('Quit'),
             ),
-            ElevatedButton.icon(
-              style: ButtonStyle(
-                backgroundColor: WidgetStateProperty.all(const Color(0xFF4CAF50)),
-                padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 20, vertical: 12)),
-                mouseCursor: WidgetStateProperty.all(SystemMouseCursors.none),
+            FilledButton.icon(
+              style: const ButtonStyle(
+                mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.none),
               ),
               onPressed: () {
                 Navigator.pop(ctx);
@@ -229,8 +239,8 @@ class _GameScreenState extends State<GameScreen> {
                 });
                 _startGame();
               },
-              icon: const Icon(Icons.play_arrow, color: Colors.white),
-              label: const Text('Play Again', style: TextStyle(color: Colors.white)),
+              icon: const Icon(Icons.play_arrow),
+              label: const Text('Play Again'),
             ),
           ],
           ),
@@ -239,18 +249,19 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  Widget _buildStatRow(IconData icon, String label, String value, Color color) {
+  Widget _buildStatRow(BuildContext ctx, IconData icon, String label, String value) {
+    final colorScheme = Theme.of(ctx).colorScheme;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(
           children: [
-            Icon(icon, color: color, size: 20),
+            Icon(icon, color: colorScheme.primary, size: 20),
             const SizedBox(width: 8),
-            Text(label, style: const TextStyle(color: Colors.white70)),
+            Text(label, style: TextStyle(color: colorScheme.onSurfaceVariant)),
           ],
         ),
-        Text(value, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(value, style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 16)),
       ],
     );
   }
@@ -260,6 +271,8 @@ class _GameScreenState extends State<GameScreen> {
       case 'Baby':
       case 'Toddler':
         return 120;
+      case 'Grandma':
+        return 180;
       case 'SpeedRun':
         return 60;
       case 'Marathon':
@@ -287,42 +300,63 @@ class _GameScreenState extends State<GameScreen> {
   @override
   Widget build(BuildContext context) {
     Widget gameWidget = GameWidget(game: _game);
+    final colorScheme = Theme.of(context).colorScheme;
     
     return Scaffold(
-      backgroundColor: const Color(0xFF1a1a2e), // Dark background
       appBar: AppBar(
-        backgroundColor: const Color(0xFF16213e),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
           tooltip: 'Back to Level Selection',
         ),
-        title: Text(
-          'AimCat - ${widget.gameMode}',
-          style: const TextStyle(color: Colors.white),
-        ),
+        title: Text('AimCat - ${widget.gameMode}'),
         centerTitle: true,
       ),
       body: Listener(
+        onPointerDown: (event) {
+          // Detect touch vs mouse
+          if (event.kind == PointerDeviceKind.touch) {
+            _setTouchMode(true);
+          } else {
+            _setTouchMode(false);
+            // Trigger paw press animation on mouse click
+            _triggerPawPress();
+          }
+        },
         onPointerHover: (event) {
+          _setTouchMode(false); // Hover means mouse
           _updatePawPosition(event.position);
         },
         onPointerMove: (event) {
           _updatePawPosition(event.position);
         },
         child: MouseRegion(
-          cursor: SystemMouseCursors.none,
-          child: Center(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                // Calculate panel size based on screen size
-                // Use 16:9 aspect ratio, max 1200x675, min 320x180
-                double maxWidth = 1200;
-                double maxHeight = 675;
-                double aspectRatio = 16 / 9;
-                
-                double panelWidth = constraints.maxWidth * 0.95;
-                double panelHeight = constraints.maxHeight * 0.95;
+          cursor: _isTouchDevice ? SystemMouseCursors.basic : SystemMouseCursors.none,
+          child: SafeArea(
+            child: Center(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Detect if mobile (portrait or small screen)
+                  final bool isMobile = constraints.maxWidth < 600;
+                  final bool isPortrait = constraints.maxHeight > constraints.maxWidth;
+                  
+                  // Use different aspect ratios based on device
+                  // Mobile portrait: 3:4 (more vertical space)
+                  // Mobile landscape/tablet: 4:3 (balanced)
+                  // Desktop: 16:9 (widescreen)
+                  double aspectRatio;
+                  if (isMobile && isPortrait) {
+                    aspectRatio = 3 / 4; // Portrait mobile - more vertical
+                  } else if (isMobile) {
+                    aspectRatio = 4 / 3; // Landscape mobile
+                  } else {
+                    aspectRatio = 16 / 9; // Desktop
+                  }
+                  
+                  // Use more screen space on mobile (98%), less on desktop (95%)
+                final double screenUsage = isMobile ? 0.98 : 0.95;
+                double panelWidth = constraints.maxWidth * screenUsage;
+                double panelHeight = constraints.maxHeight * screenUsage;
                 
                 // Constrain to aspect ratio
                 if (panelWidth / panelHeight > aspectRatio) {
@@ -331,39 +365,62 @@ class _GameScreenState extends State<GameScreen> {
                   panelHeight = panelWidth / aspectRatio;
                 }
                 
-                // Apply max/min constraints
-                panelWidth = panelWidth.clamp(320, maxWidth);
-                panelHeight = panelHeight.clamp(180, maxHeight);
+                // Dynamic max size based on device
+                final double maxWidth = isMobile ? constraints.maxWidth : 1200;
+                final double maxHeight = isMobile ? constraints.maxHeight : 800;
+                
+                // Apply constraints - smaller min for mobile
+                panelWidth = panelWidth.clamp(280, maxWidth);
+                panelHeight = panelHeight.clamp(200, maxHeight);
+                
+                // Smaller border radius on mobile
+                final double borderRadius = isMobile ? 8 : 16;
+                final double borderWidth = isMobile ? 2 : 3;
                 
                 return Container(
                   width: panelWidth,
                   height: panelHeight,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0f3460),
-                    borderRadius: BorderRadius.circular(16),
+                    color: colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(borderRadius),
                     border: Border.all(
-                      color: const Color(0xFFe94560),
-                      width: 3,
+                      color: colorScheme.primary,
+                      width: borderWidth,
                     ),
-                    boxShadow: [
+                    boxShadow: isMobile ? null : [
                       BoxShadow(
-                        color: const Color(0xFFe94560).withOpacity(0.3),
+                        color: colorScheme.primary.withOpacity(0.3),
                         blurRadius: 20,
                         spreadRadius: 2,
                       ),
                     ],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(13),
-                    child: MouseRegion(
-                      onHover: (event) {
-                        // Update game paw position relative to game panel
+                    borderRadius: BorderRadius.circular(borderRadius - borderWidth),
+                    child: GestureDetector(
+                      // Handle touch drag for hitting targets
+                      onPanStart: (details) {
                         _game.updatePawPosition(
-                          event.localPosition.dx,
-                          event.localPosition.dy,
+                          details.localPosition.dx,
+                          details.localPosition.dy,
                         );
                       },
-                      child: gameWidget,
+                      onPanUpdate: (details) {
+                        _game.updatePawPosition(
+                          details.localPosition.dx,
+                          details.localPosition.dy,
+                        );
+                      },
+                      child: MouseRegion(
+                        onHover: (event) {
+                          // Update game paw position relative to game panel
+                          _game.updatePawPosition(
+                            event.localPosition.dx,
+                            event.localPosition.dy,
+                          );
+                        },
+                        child: gameWidget,
+                      ),
                     ),
                   ),
                 );
@@ -371,7 +428,123 @@ class _GameScreenState extends State<GameScreen> {
             ),
           ),
         ),
+        ),
       ),
+    );
+  }
+}
+
+// Animated paw widget with press animation - focused on movement
+class _AnimatedPaw extends StatefulWidget {
+  const _AnimatedPaw({super.key});
+
+  @override
+  State<_AnimatedPaw> createState() => _AnimatedPawState();
+}
+
+class _AnimatedPawState extends State<_AnimatedPaw> with SingleTickerProviderStateMixin {
+  late AnimationController _pressController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _rotationAnimation;
+  late Animation<double> _translateYAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // Press animation controller
+    _pressController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    // Scale: press down then bounce back
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.0, end: 0.7).chain(CurveTween(curve: Curves.easeOutCubic)),
+        weight: 25,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.7, end: 1.15).chain(CurveTween(curve: Curves.easeOut)),
+        weight: 35,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.15, end: 1.0).chain(CurveTween(curve: Curves.easeOutBack)),
+        weight: 40,
+      ),
+    ]).animate(_pressController);
+
+    // Rotation: quick tilt like a paw hitting
+    _rotationAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.0, end: -0.25).chain(CurveTween(curve: Curves.easeOut)),
+        weight: 25,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: -0.25, end: 0.12).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 35,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.12, end: 0.0).chain(CurveTween(curve: Curves.easeOut)),
+        weight: 40,
+      ),
+    ]).animate(_pressController);
+    
+    // Vertical movement: push down then return
+    _translateYAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.0, end: 8.0).chain(CurveTween(curve: Curves.easeOut)),
+        weight: 25,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 8.0, end: -4.0).chain(CurveTween(curve: Curves.easeOut)),
+        weight: 35,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: -4.0, end: 0.0).chain(CurveTween(curve: Curves.easeOut)),
+        weight: 40,
+      ),
+    ]).animate(_pressController);
+  }
+
+  @override
+  void dispose() {
+    _pressController.dispose();
+    super.dispose();
+  }
+
+  void triggerPress() {
+    _pressController.forward(from: 0);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _pressController,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _translateYAnimation.value),
+          child: Transform.scale(
+            scale: _scaleAnimation.value,
+            child: Transform.rotate(
+              angle: _rotationAnimation.value,
+              child: Icon(
+                Icons.pets,
+                size: 64,
+                color: const Color(0xFFFFC107),
+                shadows: [
+                  // Drop shadow for depth
+                  Shadow(
+                    color: Colors.black.withOpacity(0.4),
+                    offset: const Offset(2, 2),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -104,12 +104,17 @@ class IconComponent extends PositionComponent {
 // Types of targets
 enum TargetType { positive, negative }
 
-// Tappable button component (whole area is clickable)
+// Simple Material-style tappable button
 class TappableButton extends PositionComponent with TapCallbacks {
   final void Function() onTap;
   final Color bgColor;
   final String label;
   final Color textColor;
+  final double buttonWidth;
+  final double buttonHeight;
+  final double fontSize;
+  bool _isPressed = false;
+  late TextPaint _textPaint;
 
   TappableButton({
     required Vector2 position,
@@ -117,30 +122,61 @@ class TappableButton extends PositionComponent with TapCallbacks {
     required this.bgColor,
     required this.label,
     required this.textColor,
+    this.buttonWidth = 100,
+    this.buttonHeight = 40,
+    this.fontSize = 16,
   }) : super(
     position: position,
-    size: Vector2(100, 40),
+    size: Vector2(buttonWidth, buttonHeight),
     anchor: Anchor.topLeft,
     priority: 10,
   );
 
   @override
   Future<void> onLoad() async {
-    add(RectangleComponent(
-      size: size,
-      paint: Paint()..color = bgColor,
-    ));
-    add(TextComponent(
-      text: label,
+    _textPaint = TextPaint(
+      style: TextStyle(
+        fontSize: fontSize,
+        color: textColor,
+        fontWeight: FontWeight.w500,
+      ),
+    );
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final radius = 8.0; // Fixed 8px radius for consistency
+    final rect = Rect.fromLTWH(0, 0, size.x, size.y);
+    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
+    
+    // Simple flat background
+    final bgPaint = Paint()
+      ..color = _isPressed ? bgColor.withOpacity(0.8) : bgColor;
+    canvas.drawRRect(rrect, bgPaint);
+    
+    // Draw text
+    _textPaint.render(
+      canvas,
+      label,
+      size / 2,
       anchor: Anchor.center,
-      position: size / 2,
-      textRenderer: TextPaint(style: TextStyle(fontSize: 18, color: textColor)),
-    ));
+    );
   }
 
   @override
   void onTapDown(TapDownEvent event) {
+    _isPressed = true;
+  }
+  
+  @override
+  void onTapUp(TapUpEvent event) {
+    _isPressed = false;
     onTap();
+  }
+  
+  @override
+  void onTapCancel(TapCancelEvent event) {
+    _isPressed = false;
   }
 }
 
@@ -150,19 +186,32 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
   late TappableButton finishButton;
   late TappableButton restartButton;
   bool stopped = false;
+  
+  // Scale factor for responsive sizing (based on screen width)
+  double get scaleFactor {
+    // Base size is 600px width, scale proportionally
+    final scale = (size.x / 600).clamp(0.6, 1.5);
+    return scale;
+  }
+  
+  // Scaled padding for UI elements
+  double get uiPadding => 12 * scaleFactor;
+  
+  // Check if this is a small/mobile screen
+  bool get isMobile => size.x < 500;
 
   // Helper to check if a point is over a UI overlay (e.g., buttons)
   bool isOverUI(Vector2 pos) {
-    final double overlayTop = 16;
-    final double overlayRight = size.x - 16;
-    final double overlayWidth = 220;
-    final double overlayHeight = 56;
+    final double overlayTop = uiPadding;
+    final double overlayRight = size.x - uiPadding;
+    final double overlayWidth = 200 * scaleFactor;
+    final double overlayHeight = 50 * scaleFactor;
     if (pos.x > overlayRight - overlayWidth && pos.x < overlayRight && pos.y > overlayTop && pos.y < overlayTop + overlayHeight) {
       return true;
     }
-    final double backLeft = 16;
-    final double backTop = 16;
-    final double backSize = 48;
+    final double backLeft = uiPadding;
+    final double backTop = uiPadding;
+    final double backSize = 40 * scaleFactor;
     if (pos.x > backLeft && pos.x < backLeft + backSize && pos.y > backTop && pos.y < backTop + backSize) {
       return true;
     }
@@ -178,17 +227,23 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
   final void Function(int, double, bool) onGameUpdate;
   final void Function() onResetRequest;
   final void Function(int score, double timeLeft) onFinishRequest;
+  final void Function()? onTargetHit; // Callback when a target is hit
   final int gameDuration;
   final List<Target> targets = [];
   final Random _rand = Random();
 
-  AimCatGame({required this.onGameUpdate, required this.onResetRequest, required this.onFinishRequest, this.gameDuration = 60});
+  AimCatGame({required this.onGameUpdate, required this.onResetRequest, required this.onFinishRequest, this.onTargetHit, this.gameDuration = 60});
 
   @override
   Future<void> onLoad() async {
+    // Scaled sizes for responsive UI
+    final double fontSize = 20 * scaleFactor;
+    final double smallFontSize = 16 * scaleFactor;
+    final double pawSize = 56 * scaleFactor;
+    
     // Invisible paw hitbox for collision detection only (Flutter overlay shows the visual paw)
     paw = PositionComponent(
-      size: Vector2(64, 64),
+      size: Vector2.all(pawSize),
       position: size / 2,
       priority: -100,
     );
@@ -197,39 +252,46 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
     // Score Text
     scoreText = TextComponent(
       text: 'Score: 0',
-      position: Vector2(20, 20),
+      position: Vector2(uiPadding, uiPadding),
       anchor: Anchor.topLeft,
       priority: 10,
-      textRenderer: TextPaint(style: const TextStyle(fontSize: 24, color: Colors.amber, fontWeight: FontWeight.bold)),
+      textRenderer: TextPaint(style: TextStyle(fontSize: fontSize, color: Colors.amber, fontWeight: FontWeight.bold)),
     );
     add(scoreText);
 
     // Combo Text
     comboText = TextComponent(
       text: '',
-      position: Vector2(20, 88),
+      position: Vector2(uiPadding, uiPadding + fontSize * 3.2),
       anchor: Anchor.topLeft,
       priority: 10,
-      textRenderer: TextPaint(style: const TextStyle(fontSize: 20, color: Colors.orangeAccent, fontWeight: FontWeight.bold)),
+      textRenderer: TextPaint(style: TextStyle(fontSize: smallFontSize, color: Colors.orangeAccent, fontWeight: FontWeight.bold)),
     );
     add(comboText);
 
     // Timer Text
     timerText = TextComponent(
       text: 'Time: $gameDuration',
-      position: Vector2(20, 54),
+      position: Vector2(uiPadding, uiPadding + fontSize * 1.6),
       anchor: Anchor.topLeft,
       priority: 10,
-      textRenderer: TextPaint(style: const TextStyle(fontSize: 22, color: Colors.white)),
+      textRenderer: TextPaint(style: TextStyle(fontSize: fontSize * 0.9, color: Colors.white)),
     );
     add(timerText);
 
+    // Button sizes based on scale
+    final buttonWidth = isMobile ? 70.0 : 100.0;
+    final buttonSpacing = isMobile ? 8.0 : 10.0;
+    
     // Finish Button
     finishButton = TappableButton(
-      position: Vector2(size.x - 230, 20),
-      bgColor: const Color(0xFF7C3AED),
-      label: 'Finish',
+      position: Vector2(size.x - (buttonWidth * 2 + buttonSpacing + uiPadding), uiPadding),
+      bgColor: const Color(0xFF5E35B1), // Deep Purple 600
+      label: isMobile ? '✓' : 'Finish',
       textColor: Colors.white,
+      buttonWidth: buttonWidth,
+      buttonHeight: 36 * scaleFactor,
+      fontSize: isMobile ? 16.0 : 14.0,
       onTap: () {
         endGame();
         onFinishRequest(score, timeLeft);
@@ -239,10 +301,13 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
 
     // Reset Button
     restartButton = TappableButton(
-      position: Vector2(size.x - 120, 20),
-      bgColor: const Color(0xFFFFB300),
-      label: 'Reset',
-      textColor: Colors.black,
+      position: Vector2(size.x - (buttonWidth + uiPadding), uiPadding),
+      bgColor: const Color(0xFF78909C), // Blue Grey 400
+      label: isMobile ? '↺' : 'Reset',
+      textColor: Colors.white,
+      buttonWidth: buttonWidth,
+      buttonHeight: 36 * scaleFactor,
+      fontSize: isMobile ? 16.0 : 14.0,
       onTap: () {
         onResetRequest();
       },
@@ -352,21 +417,30 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
       // 50% -10, 35% -20, 15% -30
       final roll = _rand.nextDouble();
       if (roll < 0.50) {
-        config = TargetConfigs.negative[0]; // -10 Water
+        config = TargetConfigs.negative[0]; // -10 Cancel
       } else if (roll < 0.85) {
-        config = TargetConfigs.negative[1]; // -20 Bug
+        config = TargetConfigs.negative[1]; // -20 Danger
       } else {
-        config = TargetConfigs.negative[2]; // -30 Lightning
+        config = TargetConfigs.negative[2]; // -30 Fire
       }
     }
+    
+    // Scale target size based on screen size (minimum 0.7x for small screens)
+    final targetScale = scaleFactor.clamp(0.7, 1.2);
+    final scaledSize = config.size * targetScale;
+    
+    // Keep targets within bounds with padding from edges
+    final padding = uiPadding + scaledSize / 2;
+    final spawnAreaTop = uiPadding + 50 * scaleFactor; // Below UI elements
     
     final target = Target(
       config: config,
       position: Vector2(
-        _rand.nextDouble() * (size.x - config.size),
-        _rand.nextDouble() * (size.y - config.size),
+        padding + _rand.nextDouble() * (size.x - scaledSize - padding * 2),
+        spawnAreaTop + _rand.nextDouble() * (size.y - scaledSize - spawnAreaTop - padding),
       ),
       onHit: _onTargetHit,
+      sizeScale: targetScale,
     );
     add(target);
     targets.add(target);
@@ -375,6 +449,15 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
       removeOnFinish: true,
       onTick: () {
         if (!stopped && targets.contains(target) && !target.isHit) {
+          // If a positive target expires without being hit, break the combo
+          if (target.config.isPositive && combo > 0) {
+            if (combo >= 5) {
+              _spawnComboLostText(target.position + target.size / 2);
+            }
+            combo = 0;
+            comboText.text = '';
+          }
+          
           // Fade out animation when time expires
           target.add(
             ScaleEffect.to(
@@ -394,6 +477,9 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
   void _onTargetHit(Target target) {
     if (target.isHit) return; // Prevent multiple hits
     target.isHit = true;
+    
+    // Notify Flutter to animate paw
+    onTargetHit?.call();
     
     final hitPosition = target.position + target.size / 2;
     final isPositive = target.config.isPositive;
@@ -543,19 +629,50 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
     if (bonus > 0) {
       text += ' +$bonus';
     }
+    
+    // Determine size based on value/bonus
+    double fontSize = 24;
+    if (bonus >= 50) {
+      fontSize = 36;
+    } else if (bonus >= 10) {
+      fontSize = 32;
+    } else if (value.abs() >= 40) {
+      fontSize = 30;
+    } else if (value.abs() >= 20) {
+      fontSize = 26;
+    }
+    
+    // Enhanced color for combos
+    Color textColor = color;
+    if (bonus >= 50) {
+      textColor = const Color(0xFFFF6D00); // Deep orange for super combo
+    } else if (bonus >= 10) {
+      textColor = const Color(0xFFFFAB00); // Amber accent for combo
+    }
+    
     final floatingText = TextComponent(
       text: text,
       position: position.clone(),
       anchor: Anchor.center,
       textRenderer: TextPaint(
         style: TextStyle(
-          fontSize: bonus > 0 ? 28 : 24,
+          fontSize: fontSize,
           fontWeight: FontWeight.bold,
-          color: bonus > 0 ? Colors.orange : color,
+          color: textColor,
           shadows: [
             Shadow(
-              color: Colors.black.withOpacity(0.5),
-              offset: const Offset(1, 1),
+              color: Colors.black.withOpacity(0.7),
+              offset: const Offset(2, 2),
+              blurRadius: 4,
+            ),
+            Shadow(
+              color: textColor.withOpacity(0.8),
+              offset: Offset.zero,
+              blurRadius: 10,
+            ),
+            Shadow(
+              color: Colors.white.withOpacity(0.5),
+              offset: const Offset(-1, -1),
               blurRadius: 2,
             ),
           ],
@@ -566,50 +683,118 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
     
     add(floatingText);
     
-    // Float up with fade (Material motion)
+    // Random horizontal drift for variety
+    final random = Random();
+    final drift = (random.nextDouble() - 0.5) * 40;
+    
+    // Float up with curve and drift
     floatingText.add(
       MoveByEffect(
-        Vector2(0, -50),
+        Vector2(drift, -80),
         EffectController(
-          duration: 0.6,
-          curve: Curves.easeOutCubic,
+          duration: 0.8,
+          curve: Curves.easeOutQuart,
         ),
       ),
     );
+    
+    // Pop scale effect
     floatingText.add(
       ScaleEffect.to(
-        Vector2.all(1.3),
+        Vector2.all(bonus >= 10 ? 1.6 : 1.4),
         EffectController(
-          duration: 0.15,
+          duration: 0.12,
           curve: Curves.easeOut,
-          reverseDuration: 0.45,
-          reverseCurve: Curves.easeIn,
         ),
       ),
     );
-    // Remove after animation completes
+    floatingText.add(
+      SequenceEffect([
+        ScaleEffect.to(
+          Vector2.all(bonus >= 10 ? 1.6 : 1.4),
+          EffectController(duration: 0.12),
+        ),
+        ScaleEffect.to(
+          Vector2.all(0.0),
+          EffectController(
+            duration: 0.68,
+            curve: Curves.easeInQuart,
+          ),
+        ),
+      ]),
+    );
+    
+    // Remove after animation
     floatingText.add(
       RemoveEffect(
-        delay: 0.6,
+        delay: 0.8,
+      ),
+    );
+    
+    // Spawn mini sparkles around the score for combos
+    if (bonus > 0) {
+      _spawnScoreSparkles(position, textColor);
+    }
+  }
+  
+  void _spawnScoreSparkles(Vector2 position, Color color) {
+    final random = Random();
+    add(
+      ParticleSystemComponent(
+        position: position,
+        particle: Particle.generate(
+          count: 6,
+          lifespan: 0.5,
+          generator: (i) {
+            final angle = (i / 6) * 2 * pi + random.nextDouble() * 0.5;
+            final speed = 50 + random.nextDouble() * 30;
+            return AcceleratedParticle(
+              acceleration: Vector2(0, 100),
+              speed: Vector2(cos(angle) * speed, sin(angle) * speed - 40),
+              child: ComputedParticle(
+                renderer: (canvas, particle) {
+                  final opacity = (1 - particle.progress).clamp(0.0, 1.0);
+                  final size = 5 * (1 - particle.progress * 0.5);
+                  // Draw star shape
+                  final paint = Paint()
+                    ..color = color.withOpacity(opacity)
+                    ..style = PaintingStyle.fill;
+                  canvas.drawCircle(Offset.zero, size, paint);
+                  // Inner glow
+                  canvas.drawCircle(
+                    Offset.zero,
+                    size * 0.5,
+                    Paint()..color = Colors.white.withOpacity(opacity * 0.8),
+                  );
+                },
+              ),
+            );
+          },
+        ),
       ),
     );
   }
   
   void _spawnComboLostText(Vector2 position) {
     final lostText = TextComponent(
-      text: 'COMBO LOST!',
+      text: '💔 COMBO LOST!',
       position: position.clone(),
       anchor: Anchor.center,
       textRenderer: TextPaint(
         style: TextStyle(
-          fontSize: 26,
+          fontSize: 32,
           fontWeight: FontWeight.bold,
-          color: Colors.red.shade300,
+          color: const Color(0xFFFF5252),
           shadows: [
             Shadow(
-              color: Colors.black.withOpacity(0.7),
-              offset: const Offset(2, 2),
-              blurRadius: 4,
+              color: Colors.black.withOpacity(0.8),
+              offset: const Offset(3, 3),
+              blurRadius: 6,
+            ),
+            Shadow(
+              color: const Color(0xFFFF5252).withOpacity(0.6),
+              offset: Offset.zero,
+              blurRadius: 15,
             ),
           ],
         ),
@@ -619,30 +804,109 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
     
     add(lostText);
     
-    // Float up with shake effect
+    // Shake horizontally while floating up
     lostText.add(
       MoveByEffect(
-        Vector2(0, -60),
+        Vector2(0, -80),
         EffectController(
-          duration: 0.8,
-          curve: Curves.easeOutCubic,
+          duration: 1.0,
+          curve: Curves.easeOutQuart,
         ),
       ),
     );
+    
+    // Pop in and shake
     lostText.add(
-      ScaleEffect.to(
-        Vector2.all(1.5),
-        EffectController(
-          duration: 0.2,
-          curve: Curves.elasticOut,
-          reverseDuration: 0.6,
-          reverseCurve: Curves.easeIn,
+      SequenceEffect([
+        ScaleEffect.to(
+          Vector2.all(1.8),
+          EffectController(
+            duration: 0.15,
+            curve: Curves.easeOutBack,
+          ),
         ),
-      ),
+        ScaleEffect.to(
+          Vector2.all(1.4),
+          EffectController(
+            duration: 0.1,
+          ),
+        ),
+        ScaleEffect.to(
+          Vector2.all(0.0),
+          EffectController(
+            duration: 0.75,
+            curve: Curves.easeInQuart,
+          ),
+        ),
+      ]),
     );
+    
+    // Rotation shake effect
+    lostText.add(
+      SequenceEffect([
+        RotateEffect.by(
+          0.1,
+          EffectController(duration: 0.05),
+        ),
+        RotateEffect.by(
+          -0.2,
+          EffectController(duration: 0.05),
+        ),
+        RotateEffect.by(
+          0.15,
+          EffectController(duration: 0.05),
+        ),
+        RotateEffect.by(
+          -0.05,
+          EffectController(duration: 0.05),
+        ),
+      ]),
+    );
+    
     lostText.add(
       RemoveEffect(
-        delay: 0.8,
+        delay: 1.0,
+      ),
+    );
+    
+    // Spawn broken heart particles
+    _spawnComboLostParticles(position);
+  }
+  
+  void _spawnComboLostParticles(Vector2 position) {
+    final random = Random();
+    add(
+      ParticleSystemComponent(
+        position: position,
+        particle: Particle.generate(
+          count: 10,
+          lifespan: 0.8,
+          generator: (i) {
+            final angle = (random.nextDouble() - 0.5) * pi;
+            final speed = 60 + random.nextDouble() * 80;
+            return AcceleratedParticle(
+              acceleration: Vector2(0, 200),
+              speed: Vector2(cos(angle) * speed, sin(angle) * speed - 80),
+              child: ComputedParticle(
+                renderer: (canvas, particle) {
+                  final opacity = (1 - particle.progress).clamp(0.0, 1.0);
+                  final size = 8 * (1 - particle.progress * 0.3);
+                  // Draw red shards
+                  final paint = Paint()
+                    ..color = Colors.red.withOpacity(opacity)
+                    ..style = PaintingStyle.fill;
+                  canvas.save();
+                  canvas.rotate(particle.progress * pi);
+                  canvas.drawRect(
+                    Rect.fromCenter(center: Offset.zero, width: size, height: size * 0.4),
+                    paint,
+                  );
+                  canvas.restore();
+                },
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -719,6 +983,7 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
 class Target extends PositionComponent with TapCallbacks {
   final TargetConfig config;
   final void Function(Target) onHit;
+  final double sizeScale;
   bool isHit = false; // Prevent multiple hits during animation
   bool _isHovered = false;
 
@@ -726,27 +991,30 @@ class Target extends PositionComponent with TapCallbacks {
     required this.config,
     required Vector2 position,
     required this.onHit,
+    this.sizeScale = 1.0,
   }) : super(
     position: position,
-    size: Vector2.all(config.size),
+    size: Vector2.all(config.size * sizeScale),
   );
 
   @override
   Future<void> onLoad() async {
-    // Add the icon component with size from config
+    final scaledIconSize = config.size * sizeScale;
+    
+    // Add the icon component with scaled size
     add(IconComponent(
       icon: config.icon,
       color: config.color,
-      iconSize: config.size,
+      iconSize: scaledIconSize,
       position: Vector2.zero(),
     ));
     
     add(RectangleHitbox());
     
-    // Add idle floating animation (Material subtle motion)
+    // Add idle floating animation (Material subtle motion) - scale float distance
     add(
       MoveByEffect(
-        Vector2(0, -4),
+        Vector2(0, -3 * sizeScale),
         EffectController(
           duration: 0.8,
           curve: Curves.easeInOut,

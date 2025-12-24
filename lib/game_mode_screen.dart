@@ -1,6 +1,73 @@
 import 'game_screen.dart';
 import 'package:flutter/material.dart';
 
+// Game mode data model
+class GameModeData {
+  final String name;
+  final String description;
+  final String imagePath;
+  final IconData icon;
+
+  const GameModeData({
+    required this.name,
+    required this.description,
+    required this.imagePath,
+    required this.icon,
+  });
+}
+
+// Available game modes
+const List<GameModeData> gameModes = [
+  GameModeData(
+    name: 'Baby',
+    description: 'Scores do not matter. 2 minutes.',
+    imagePath: 'assets/modes/baby.png',
+    icon: Icons.child_care,
+  ),
+  GameModeData(
+    name: 'Toddler',
+    description: 'Scores matter. 2 minutes.',
+    imagePath: 'assets/modes/toddler.png',
+    icon: Icons.directions_walk,
+  ),
+  GameModeData(
+    name: 'Grandma',
+    description: 'Slow and relaxed. 3 minutes.',
+    imagePath: 'assets/modes/grandma.png',
+    icon: Icons.elderly_woman,
+  ),
+  GameModeData(
+    name: 'SpeedRun',
+    description: 'Scores matter. 1 minute.',
+    imagePath: 'assets/modes/speedrun.png',
+    icon: Icons.speed,
+  ),
+  GameModeData(
+    name: 'Marathon',
+    description: 'Scores matter. 5 minutes.',
+    imagePath: 'assets/modes/marathon.png',
+    icon: Icons.directions_run,
+  ),
+  GameModeData(
+    name: 'Ultra Marathon',
+    description: 'Scores matter. 2 hours.',
+    imagePath: 'assets/modes/ultramarathon.png',
+    icon: Icons.fitness_center,
+  ),
+  GameModeData(
+    name: 'Sayajin',
+    description: 'Targets disappear very quickly. 2 min.',
+    imagePath: 'assets/modes/sayajin.png',
+    icon: Icons.flash_on,
+  ),
+  GameModeData(
+    name: 'Hacker',
+    description: 'Impossible speed. Funny mode. 2 min.',
+    imagePath: 'assets/modes/hacker.png',
+    icon: Icons.terminal,
+  ),
+];
+
 class GameModeScreen extends StatelessWidget {
   final int selectedCat;
   final String username;
@@ -10,27 +77,46 @@ class GameModeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Select Game Mode')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _modeTile('Baby', 'Scores do not matter. 2 minutes.', context),
-          _modeTile('Toddler', 'Scores matter. 2 minutes.', context),
-          _modeTile('SpeedRun', 'Scores matter. 1 minute.', context),
-          _modeTile('Marathon', 'Scores matter. 5 minutes.', context),
-          _modeTile('Ultra Marathon', 'Scores matter. 2 hours.', context),
-          _modeTile('Sayajin', '2 minutes. Targets disappear very quickly, but possible for fast reflexes.', context),
-          _modeTile('Hacker', '2 minutes. Targets blink and disappear faster than human reflexes. (Funny mode)', context),
-        ],
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final screenWidth = constraints.maxWidth;
+            final isMobile = screenWidth < 600;
+            final crossAxisCount = isMobile ? 2 : 4;
+            final maxWidth = isMobile ? screenWidth : 900.0;
+            final aspectRatio = isMobile ? 0.8 : 0.75;
+
+            return Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxWidth),
+                child: Padding(
+                  padding: EdgeInsets.all(isMobile ? 12 : 16),
+                  child: GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      mainAxisSpacing: isMobile ? 12 : 16,
+                      crossAxisSpacing: isMobile ? 12 : 16,
+                      childAspectRatio: aspectRatio,
+                    ),
+                    itemCount: gameModes.length,
+                    itemBuilder: (context, index) {
+                      final mode = gameModes[index];
+                      return _buildModeCard(context, mode, isMobile);
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
 
-  Widget _modeTile(String mode, String desc, BuildContext context) {
+  Widget _buildModeCard(BuildContext context, GameModeData mode, bool isMobile) {
     return Card(
-      child: ListTile(
-        title: Text(mode, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(desc),
-        trailing: const Icon(Icons.arrow_forward),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
         onTap: () {
           Navigator.push(
             context,
@@ -38,11 +124,65 @@ class GameModeScreen extends StatelessWidget {
               builder: (context) => GameScreen(
                 selectedCat: selectedCat,
                 username: username,
-                gameMode: mode,
+                gameMode: mode.name,
               ),
             ),
           );
         },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Image area
+            Expanded(
+              flex: 3,
+              child: Container(
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
+                child: Image.asset(
+                  mode.imagePath,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Center(
+                      child: Icon(
+                        mode.icon,
+                        size: isMobile ? 48 : 64,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            // Text area
+            Padding(
+              padding: EdgeInsets.all(isMobile ? 8 : 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    mode.name,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (!isMobile) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      mode.description,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
