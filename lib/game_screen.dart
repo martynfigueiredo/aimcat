@@ -212,35 +212,45 @@ class _GameScreenState extends State<GameScreen> {
               const Divider(),
             ],
           ),
-          actionsAlignment: MainAxisAlignment.spaceEvenly,
+          actionsAlignment: MainAxisAlignment.center,
+          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
           actions: [
-            FilledButton.tonalIcon(
-              style: const ButtonStyle(
-                mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.none),
-              ),
-              onPressed: () {
-                Navigator.pop(ctx);
-                _removePawOverlay();
-                Navigator.popUntil(context, (route) => route.isFirst);
-              },
-              icon: const Icon(Icons.home),
-              label: const Text('Quit'),
-            ),
-            FilledButton.icon(
-              style: const ButtonStyle(
-                mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.none),
-              ),
-              onPressed: () {
-                Navigator.pop(ctx);
-                setState(() {
-                  finished = false;
-                  score = 0;
-                  timeLeft = 60;
-                });
-                _startGame();
-              },
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('Play Again'),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.tonalIcon(
+                    style: const ButtonStyle(
+                      mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.none),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _removePawOverlay();
+                      Navigator.popUntil(context, (route) => route.isFirst);
+                    },
+                    icon: const Icon(Icons.home),
+                    label: const Text('Quit'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: FilledButton.icon(
+                    style: const ButtonStyle(
+                      mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.none),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      setState(() {
+                        finished = false;
+                        score = 0;
+                        timeLeft = 60;
+                      });
+                      _startGame();
+                    },
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('Play Again'),
+                  ),
+                ),
+              ],
             ),
           ],
           ),

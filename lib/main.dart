@@ -122,7 +122,7 @@ class HomeScreen extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                     // Clickable cat image to start the game
                     GestureDetector(
                       onTap: () {
@@ -141,9 +141,9 @@ class HomeScreen extends StatelessWidget {
                               height: imageSize,
                               fit: BoxFit.contain,
                             ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 16),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                               decoration: BoxDecoration(
                                 color: Theme.of(context).colorScheme.primaryContainer,
                                 borderRadius: BorderRadius.circular(24),
@@ -160,7 +160,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),

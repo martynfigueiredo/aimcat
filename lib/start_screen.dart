@@ -160,23 +160,26 @@ class _StartScreenState extends State<StartScreen> {
                           crossAxisCount: crossAxisCount,
                           mainAxisSpacing: spacing,
                           crossAxisSpacing: spacing,
-                          childAspectRatio: isMobile ? 0.9 : 0.85,
+                          childAspectRatio: isMobile ? 0.85 : 0.8,
                         ),
                         itemCount: profiles.length,
                         itemBuilder: (context, index) {
                           final profile = profiles[index];
                           final isSelected = selectedProfile == index;
                           return GestureDetector(
-                            onTap: () => _onProfileSelected(index),
+                            onTap: () {
+                              _onProfileSelected(index);
+                              _goToUsernameStep();
+                            },
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(isMobile ? 8 : 12),
+                                borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: isSelected
                                       ? Theme.of(context).colorScheme.primary
                                       : Colors.transparent,
-                                  width: isMobile ? 2 : 3,
+                                  width: 3,
                                 ),
                                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
                               ),
@@ -184,14 +187,15 @@ class _StartScreenState extends State<StartScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Expanded(
+                                    flex: 5,
                                     child: Container(
-                                      margin: EdgeInsets.all(isMobile ? 6 : 8),
+                                      margin: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
                                         color: Theme.of(context).colorScheme.surfaceContainerLow,
-                                        borderRadius: BorderRadius.circular(isMobile ? 6 : 8),
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(isMobile ? 6 : 8),
+                                        borderRadius: BorderRadius.circular(8),
                                         child: Image.asset(
                                           profile.imagePath,
                                           fit: BoxFit.cover,
@@ -200,8 +204,8 @@ class _StartScreenState extends State<StartScreen> {
                                     ),
                                   ),
                                   Padding(
-                                    padding: EdgeInsets.only(
-                                      bottom: isMobile ? 6 : 8,
+                                    padding: const EdgeInsets.only(
+                                      bottom: 8,
                                       left: 4,
                                       right: 4,
                                     ),
@@ -209,7 +213,7 @@ class _StartScreenState extends State<StartScreen> {
                                       profile.name,
                                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                        fontSize: isMobile ? 10 : 12,
+                                        fontSize: 11,
                                       ),
                                       textAlign: TextAlign.center,
                                       maxLines: 1,
@@ -221,22 +225,6 @@ class _StartScreenState extends State<StartScreen> {
                             ),
                           );
                         },
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              // Continue button
-              Padding(
-                padding: EdgeInsets.all(isMobile ? 12 : 16),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: isMobile ? double.infinity : 300),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: _goToUsernameStep,
-                        child: const Text('Continue'),
                       ),
                     ),
                   ),
@@ -254,23 +242,23 @@ class _StartScreenState extends State<StartScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 600;
-        final maxWidth = isMobile ? double.infinity : 380.0;
-        final profileSize = isMobile ? 100.0 : 120.0;
+        final maxWidth = isMobile ? double.infinity : 400.0;
+        final profileSize = isMobile ? 120.0 : 140.0;
         
         return SafeArea(
           child: Center(
             child: SingleChildScrollView(
               key: const ValueKey('username_step'),
-              padding: EdgeInsets.all(isMobile ? 16 : 24),
+              padding: const EdgeInsets.all(20),
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: maxWidth),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(height: isMobile ? 16 : 24),
+                    const SizedBox(height: 16),
                     // Selected profile display
                     Container(
-                      padding: EdgeInsets.all(isMobile ? 16 : 20),
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(16),
@@ -310,7 +298,7 @@ class _StartScreenState extends State<StartScreen> {
                         ],
                       ),
                     ),
-                    SizedBox(height: isMobile ? 24 : 32),
+                    const SizedBox(height: 24),
                     // Username input
                     TextField(
                       controller: _controller,
@@ -344,7 +332,7 @@ class _StartScreenState extends State<StartScreen> {
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    SizedBox(height: isMobile ? 24 : 32),
+                    const SizedBox(height: 24),
                     // Start button
                     SizedBox(
                       width: double.infinity,

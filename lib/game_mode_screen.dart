@@ -84,18 +84,18 @@ class GameModeScreen extends StatelessWidget {
             final isMobile = screenWidth < 600;
             final crossAxisCount = isMobile ? 2 : 4;
             final maxWidth = isMobile ? screenWidth : 900.0;
-            final aspectRatio = isMobile ? 0.8 : 0.75;
+            final aspectRatio = isMobile ? 0.75 : 0.7;
 
             return Center(
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: maxWidth),
                 child: Padding(
-                  padding: EdgeInsets.all(isMobile ? 12 : 16),
+                  padding: const EdgeInsets.all(16),
                   child: GridView.builder(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: crossAxisCount,
-                      mainAxisSpacing: isMobile ? 12 : 16,
-                      crossAxisSpacing: isMobile ? 12 : 16,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
                       childAspectRatio: aspectRatio,
                     ),
                     itemCount: gameModes.length,
@@ -134,7 +134,7 @@ class GameModeScreen extends StatelessWidget {
           children: [
             // Image area
             Expanded(
-              flex: 3,
+              flex: 4,
               child: Container(
                 color: Theme.of(context).colorScheme.surfaceContainerLow,
                 child: Image.asset(
@@ -144,7 +144,7 @@ class GameModeScreen extends StatelessWidget {
                     return Center(
                       child: Icon(
                         mode.icon,
-                        size: isMobile ? 48 : 64,
+                        size: isMobile ? 56 : 72,
                         color: Theme.of(context).colorScheme.primary,
                       ),
                     );
@@ -154,7 +154,7 @@ class GameModeScreen extends StatelessWidget {
             ),
             // Text area
             Padding(
-              padding: EdgeInsets.all(isMobile ? 8 : 12),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
