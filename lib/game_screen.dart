@@ -107,11 +107,11 @@ class _GameScreenState extends State<GameScreen> {
             if (mounted) {
               setState(() {
                 score = s;
-                timeLeft = t;
+                timeLeft = t < 0 ? 0 : t;
                 finished = f;
               });
               if (f) {
-                _showFinishModal(s, t);
+                _showFinishModal(s, timeLeft);
               }
             }
           });

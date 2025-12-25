@@ -16,6 +16,8 @@ class TargetConfig {
   final double duration;
   final bool isPositive;
   final double size; // Icon size
+  final int timeBonus; // Seconds to add/subtract from time (0 = no time effect)
+  final String name; // Display name for the target
 
   const TargetConfig({
     required this.icon,
@@ -24,6 +26,8 @@ class TargetConfig {
     required this.duration,
     required this.isPositive,
     required this.size,
+    this.timeBonus = 0,
+    required this.name,
   });
 }
 
@@ -31,18 +35,43 @@ class TargetConfig {
 class TargetConfigs {
   // Positive targets (sorted by value) - Higher value = bigger
   static const List<TargetConfig> positive = [
-    TargetConfig(icon: Icons.favorite, color: Color(0xFFE91E63), value: 10, duration: 2.0, isPositive: true, size: 36),       // Heart - Small
-    TargetConfig(icon: Icons.star, color: Color(0xFFFFEB3B), value: 20, duration: 1.7, isPositive: true, size: 44),           // Star
-    TargetConfig(icon: Icons.auto_awesome, color: Color(0xFF00BCD4), value: 30, duration: 1.4, isPositive: true, size: 52),   // Sparkle
-    TargetConfig(icon: Icons.emoji_events, color: Color(0xFFFF9800), value: 40, duration: 1.1, isPositive: true, size: 60),   // Trophy
-    TargetConfig(icon: Icons.diamond, color: Color(0xFF9C27B0), value: 50, duration: 0.8, isPositive: true, size: 68),        // Diamond - Big
+    // Low value (5 pts)
+    TargetConfig(icon: Icons.eco, color: Color(0xFF8BC34A), value: 5, duration: 2.2, isPositive: true, size: 32, name: 'Fruits'),
+    TargetConfig(icon: Icons.sports_bar, color: Color(0xFFFFB300), value: 5, duration: 2.2, isPositive: true, size: 32, name: 'Beer'),
+    // Medium-low value (10 pts)
+    TargetConfig(icon: Icons.favorite, color: Color(0xFFE91E63), value: 10, duration: 2.0, isPositive: true, size: 36, name: 'Heart'),
+    TargetConfig(icon: Icons.baby_changing_station, color: Color(0xFF81D4FA), value: 10, duration: 2.0, isPositive: true, size: 36, name: 'Baby Bottle'),
+    TargetConfig(icon: Icons.apple, color: Color(0xFFE53935), value: 10, duration: 2.0, isPositive: true, size: 36, name: 'Apple'),
+    // Medium value (20 pts)
+    TargetConfig(icon: Icons.star, color: Color(0xFFFFEB3B), value: 20, duration: 1.7, isPositive: true, size: 44, name: 'Star'),
+    TargetConfig(icon: Icons.water_drop, color: Color(0xFF29B6F6), value: 20, duration: 1.7, isPositive: true, size: 44, name: 'Water'),
+    TargetConfig(icon: Icons.cruelty_free, color: Color(0xFFFFB6C1), value: 20, duration: 1.7, isPositive: true, size: 44, name: 'Bunny'),
+    // Medium-high value (30-40 pts)
+    TargetConfig(icon: Icons.auto_awesome, color: Color(0xFF00BCD4), value: 30, duration: 1.4, isPositive: true, size: 52, name: 'Sparkle'),
+    TargetConfig(icon: Icons.emoji_events, color: Color(0xFFFF9800), value: 40, duration: 1.1, isPositive: true, size: 60, name: 'Trophy'),
+    // High value (50 pts)
+    TargetConfig(icon: Icons.diamond, color: Color(0xFF9C27B0), value: 50, duration: 0.8, isPositive: true, size: 68, name: 'Diamond'),
+    // Time bonus targets
+    TargetConfig(icon: Icons.schedule, color: Color(0xFF4CAF50), value: 0, duration: 1.5, isPositive: true, size: 48, timeBonus: 10, name: 'Clock +10s'),
   ];
 
   // Negative targets (sorted by value) - Higher penalty = bigger (easier to accidentally hit!)
   static const List<TargetConfig> negative = [
-    TargetConfig(icon: Icons.cancel, color: Color(0xFFE53935), value: -10, duration: 2.5, isPositive: false, size: 40),                  // Red X - Small
-    TargetConfig(icon: Icons.dangerous, color: Color(0xFFFF5722), value: -20, duration: 2.2, isPositive: false, size: 52),               // Skull/Danger
-    TargetConfig(icon: Icons.local_fire_department, color: Color(0xFFD32F2F), value: -30, duration: 1.9, isPositive: false, size: 64),   // Fire - Big
+    // Low penalty (-10 pts)
+    TargetConfig(icon: Icons.push_pin, color: Color(0xFFE53935), value: -10, duration: 2.5, isPositive: false, size: 40, name: 'Thumbtack'),
+    // Medium penalty (-30 pts)
+    TargetConfig(icon: Icons.cancel, color: Color(0xFFE53935), value: -30, duration: 2.2, isPositive: false, size: 48, name: 'Cancel'),
+    TargetConfig(icon: Icons.coronavirus, color: Color(0xFF7B1FA2), value: -30, duration: 2.2, isPositive: false, size: 48, name: 'Poison'),
+    TargetConfig(icon: Icons.dangerous, color: Color(0xFFFF5722), value: -30, duration: 2.0, isPositive: false, size: 52, name: 'Bomb'),
+    TargetConfig(icon: Icons.grass, color: Color(0xFF388E3C), value: -30, duration: 2.0, isPositive: false, size: 52, name: 'Cactus'),
+    // High penalty (-50 pts)
+    TargetConfig(icon: Icons.smoking_rooms, color: Color(0xFF757575), value: -50, duration: 1.8, isPositive: false, size: 56, name: 'Cigarette'),
+    TargetConfig(icon: Icons.pest_control, color: Color(0xFF795548), value: -50, duration: 1.8, isPositive: false, size: 56, name: 'Rat'),
+    TargetConfig(icon: Icons.local_fire_department, color: Color(0xFFD32F2F), value: -50, duration: 1.8, isPositive: false, size: 56, name: 'Fire'),
+    // Very high penalty (-100 pts)
+    TargetConfig(icon: Icons.no_food, color: Color(0xFF5D4037), value: -100, duration: 1.5, isPositive: false, size: 64, name: 'Rotten Food'),
+    // Time penalty targets
+    TargetConfig(icon: Icons.timer_off, color: Color(0xFFD32F2F), value: 0, duration: 2.0, isPositive: false, size: 48, timeBonus: -10, name: 'Clock -10s'),
   ];
 }
 
@@ -183,6 +212,7 @@ class TappableButton extends PositionComponent with TapCallbacks {
 class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovementDetector, HasCollisionDetection {
   late TextComponent scoreText;
   late TextComponent timerText;
+  late TextComponent lastHitText;
   late TappableButton finishButton;
   late TappableButton restartButton;
   bool stopped = false;
@@ -241,6 +271,15 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
     final double smallFontSize = 16 * scaleFactor;
     final double pawSize = 56 * scaleFactor;
     
+    // Pre-cache emoji text to avoid first-render delay
+    final emojiPreloader = TextComponent(
+      text: '💔',
+      position: Vector2(-100, -100), // Off-screen
+      textRenderer: TextPaint(style: const TextStyle(fontSize: 32)),
+    );
+    add(emojiPreloader);
+    emojiPreloader.removeFromParent();
+    
     // Invisible paw hitbox for collision detection only (Flutter overlay shows the visual paw)
     paw = PositionComponent(
       size: Vector2.all(pawSize),
@@ -249,7 +288,7 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
     );
     add(paw);
 
-    // Score Text
+    // Score Text (Line 1)
     scoreText = TextComponent(
       text: 'Score: 0',
       position: Vector2(uiPadding, uiPadding),
@@ -259,25 +298,35 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
     );
     add(scoreText);
 
-    // Combo Text
+    // Timer Text (Line 2)
+    timerText = TextComponent(
+      text: 'Time: $gameDuration',
+      position: Vector2(uiPadding, uiPadding + fontSize * 1.4),
+      anchor: Anchor.topLeft,
+      priority: 10,
+      textRenderer: TextPaint(style: TextStyle(fontSize: fontSize, color: Colors.white, fontWeight: FontWeight.bold)),
+    );
+    add(timerText);
+
+    // Last Hit Text (Line 3)
+    lastHitText = TextComponent(
+      text: '',
+      position: Vector2(uiPadding, uiPadding + fontSize * 2.8),
+      anchor: Anchor.topLeft,
+      priority: 10,
+      textRenderer: TextPaint(style: TextStyle(fontSize: fontSize, color: Colors.white70, fontWeight: FontWeight.bold)),
+    );
+    add(lastHitText);
+
+    // Combo Text (Line 4 - temporary info)
     comboText = TextComponent(
       text: '',
-      position: Vector2(uiPadding, uiPadding + fontSize * 3.2),
+      position: Vector2(uiPadding, uiPadding + fontSize * 4.2),
       anchor: Anchor.topLeft,
       priority: 10,
       textRenderer: TextPaint(style: TextStyle(fontSize: smallFontSize, color: Colors.orangeAccent, fontWeight: FontWeight.bold)),
     );
     add(comboText);
-
-    // Timer Text
-    timerText = TextComponent(
-      text: 'Time: $gameDuration',
-      position: Vector2(uiPadding, uiPadding + fontSize * 1.6),
-      anchor: Anchor.topLeft,
-      priority: 10,
-      textRenderer: TextPaint(style: TextStyle(fontSize: fontSize * 0.9, color: Colors.white)),
-    );
-    add(timerText);
 
     // Button sizes based on scale
     final buttonWidth = isMobile ? 70.0 : 100.0;
@@ -327,8 +376,9 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
       period: 1,
       repeat: true,
       onTick: () {
-        if (!stopped) {
+        if (!stopped && timeLeft > 0) {
           timeLeft--;
+          if (timeLeft < 0) timeLeft = 0;
           timerText.text = 'Time: ${timeLeft.toInt()}';
           onGameUpdate(score, timeLeft, false);
         }
@@ -355,6 +405,7 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
     scoreText.text = 'Score: 0';
     timerText.text = 'Time: $gameDuration';
     comboText.text = '';
+    lastHitText.text = '';
     for (final t in List<Target>.from(targets)) {
       t.removeFromParent();
     }
@@ -372,8 +423,9 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
       period: 1,
       repeat: true,
       onTick: () {
-        if (!stopped) {
+        if (!stopped && timeLeft > 0) {
           timeLeft--;
+          if (timeLeft < 0) timeLeft = 0;
           timerText.text = 'Time: ${timeLeft.toInt()}';
           onGameUpdate(score, timeLeft, false);
         }
@@ -398,30 +450,64 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
     
     TargetConfig config;
     if (isPositive) {
-      // Weighted random: lower values more common
-      // 40% +10, 25% +20, 18% +30, 12% +40, 5% +50
+      final targets = TargetConfigs.positive;
+      // Group by value for weighted selection
+      // 5 pts: 25%, 10 pts: 25%, 20 pts: 20%, 30 pts: 12%, 40 pts: 8%, 50 pts: 5%, Time bonus: 5%
       final roll = _rand.nextDouble();
-      if (roll < 0.40) {
-        config = TargetConfigs.positive[0]; // +10 Heart
-      } else if (roll < 0.65) {
-        config = TargetConfigs.positive[1]; // +20 Star
-      } else if (roll < 0.83) {
-        config = TargetConfigs.positive[2]; // +30 Sparkle
+      if (roll < 0.25) {
+        // 5 pts targets
+        final lowValue = targets.where((t) => t.value == 5).toList();
+        config = lowValue[_rand.nextInt(lowValue.length)];
+      } else if (roll < 0.50) {
+        // 10 pts targets
+        final medLowValue = targets.where((t) => t.value == 10).toList();
+        config = medLowValue[_rand.nextInt(medLowValue.length)];
+      } else if (roll < 0.70) {
+        // 20 pts targets
+        final medValue = targets.where((t) => t.value == 20).toList();
+        config = medValue[_rand.nextInt(medValue.length)];
+      } else if (roll < 0.82) {
+        // 30 pts targets
+        final medHighValue = targets.where((t) => t.value == 30).toList();
+        config = medHighValue[_rand.nextInt(medHighValue.length)];
+      } else if (roll < 0.90) {
+        // 40 pts targets
+        final highValue = targets.where((t) => t.value == 40).toList();
+        config = highValue[_rand.nextInt(highValue.length)];
       } else if (roll < 0.95) {
-        config = TargetConfigs.positive[3]; // +40 Trophy
+        // 50 pts targets (rare!)
+        final veryHighValue = targets.where((t) => t.value == 50).toList();
+        config = veryHighValue[_rand.nextInt(veryHighValue.length)];
       } else {
-        config = TargetConfigs.positive[4]; // +50 Diamond (rare!)
+        // Time bonus targets (5% chance)
+        final timeBonusTargets = targets.where((t) => t.timeBonus > 0).toList();
+        config = timeBonusTargets[_rand.nextInt(timeBonusTargets.length)];
       }
     } else {
-      // Weighted random for negative: -10 most common
-      // 50% -10, 35% -20, 15% -30
+      final targets = TargetConfigs.negative;
+      // Group by value for weighted selection
+      // -10 pts: 30%, -30 pts: 40%, -50 pts: 20%, -100 pts: 5%, Time penalty: 5%
       final roll = _rand.nextDouble();
-      if (roll < 0.50) {
-        config = TargetConfigs.negative[0]; // -10 Cancel
-      } else if (roll < 0.85) {
-        config = TargetConfigs.negative[1]; // -20 Danger
+      if (roll < 0.30) {
+        // -10 pts targets
+        final lowPenalty = targets.where((t) => t.value == -10).toList();
+        config = lowPenalty[_rand.nextInt(lowPenalty.length)];
+      } else if (roll < 0.70) {
+        // -30 pts targets
+        final medPenalty = targets.where((t) => t.value == -30).toList();
+        config = medPenalty[_rand.nextInt(medPenalty.length)];
+      } else if (roll < 0.90) {
+        // -50 pts targets
+        final highPenalty = targets.where((t) => t.value == -50).toList();
+        config = highPenalty[_rand.nextInt(highPenalty.length)];
+      } else if (roll < 0.95) {
+        // -100 pts targets (rare!)
+        final veryHighPenalty = targets.where((t) => t.value == -100).toList();
+        config = veryHighPenalty[_rand.nextInt(veryHighPenalty.length)];
       } else {
-        config = TargetConfigs.negative[2]; // -30 Fire
+        // Time penalty targets (5% chance)
+        final timePenaltyTargets = targets.where((t) => t.timeBonus < 0).toList();
+        config = timePenaltyTargets[_rand.nextInt(timePenaltyTargets.length)];
       }
     }
     
@@ -523,6 +609,33 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
     
     score += totalValue;
     scoreText.text = 'Score: $score';
+    
+    // Update last hit text
+    final valueText = target.config.value >= 0 ? '+${target.config.value}' : '${target.config.value}';
+    lastHitText.text = 'Last: ${target.config.name} ($valueText)';
+    lastHitText.textRenderer = TextPaint(
+      style: TextStyle(
+        fontSize: 20 * scaleFactor,
+        color: isPositive ? const Color(0xFF81C784) : const Color(0xFFE57373),
+        fontWeight: FontWeight.bold,
+      ),
+    );
+    
+    // Apply time bonus/penalty
+    if (target.config.timeBonus != 0) {
+      timeLeft += target.config.timeBonus;
+      if (timeLeft < 0) timeLeft = 0;
+      timerText.text = 'Time: ${timeLeft.toInt()}';
+      // Spawn time indicator
+      final timeColor = target.config.timeBonus > 0 
+          ? const Color(0xFF4CAF50) 
+          : const Color(0xFFE53935);
+      final timeText = target.config.timeBonus > 0 
+          ? '+${target.config.timeBonus}s' 
+          : '${target.config.timeBonus}s';
+      _spawnFloatingText(hitPosition + Vector2(0, -30), timeText, timeColor);
+    }
+    
     onGameUpdate(score, timeLeft, false);
     
     // Use target's color for particles, or default Material colors
@@ -772,6 +885,64 @@ class AimCatGame extends FlameGame with TapCallbacks, PanDetector, MouseMovement
           },
         ),
       ),
+    );
+  }
+
+  void _spawnFloatingText(Vector2 position, String text, Color color) {
+    final floatingText = TextComponent(
+      text: text,
+      position: position.clone(),
+      anchor: Anchor.center,
+      textRenderer: TextPaint(
+        style: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: color,
+          shadows: [
+            Shadow(
+              color: Colors.black.withOpacity(0.7),
+              offset: const Offset(2, 2),
+              blurRadius: 4,
+            ),
+          ],
+        ),
+      ),
+      priority: 100,
+    );
+    
+    add(floatingText);
+    
+    // Float up
+    floatingText.add(
+      MoveByEffect(
+        Vector2(0, -60),
+        EffectController(
+          duration: 0.6,
+          curve: Curves.easeOutQuart,
+        ),
+      ),
+    );
+    
+    // Fade out
+    floatingText.add(
+      SequenceEffect([
+        ScaleEffect.to(
+          Vector2.all(1.3),
+          EffectController(duration: 0.1),
+        ),
+        ScaleEffect.to(
+          Vector2.all(0.0),
+          EffectController(
+            duration: 0.5,
+            curve: Curves.easeInQuart,
+          ),
+        ),
+      ]),
+    );
+    
+    // Remove after animation
+    floatingText.add(
+      RemoveEffect(delay: 0.6),
     );
   }
   

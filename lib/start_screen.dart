@@ -20,22 +20,26 @@ class ProfileData {
 
 // Available profiles
 const List<ProfileData> profiles = [
-  ProfileData(name: 'Cat', imagePath: 'assets/profiles/Cat.png'),
+  ProfileData(name: 'Bidoque', imagePath: 'assets/profiles/Bidoque.png'),
   ProfileData(name: 'Capybara', imagePath: 'assets/profiles/Capybara.png'),
+  ProfileData(name: 'Cat', imagePath: 'assets/profiles/Cat.png'),
   ProfileData(name: 'Devil Cat', imagePath: 'assets/profiles/DevilCat.png'),
   ProfileData(name: 'Diplomat', imagePath: 'assets/profiles/Diplomat.png'),
   ProfileData(name: 'Flying Horse', imagePath: 'assets/profiles/FlyingHorse.png'),
   ProfileData(name: 'Ghost', imagePath: 'assets/profiles/Ghost.png'),
+  ProfileData(name: 'Golden Girl', imagePath: 'assets/profiles/GoldenGirl.png'),
   ProfileData(name: 'Grandma', imagePath: 'assets/profiles/Grandma.png'),
   ProfileData(name: 'Koi', imagePath: 'assets/profiles/Koi.png'),
   ProfileData(name: 'Librarian', imagePath: 'assets/profiles/Librarian.png'),
+  ProfileData(name: 'Mom', imagePath: 'assets/profiles/Mom.png'),
   ProfileData(name: 'Moustache', imagePath: 'assets/profiles/Moustache.png'),
   ProfileData(name: 'Nerdy', imagePath: 'assets/profiles/Nerdy.png'),
   ProfileData(name: 'Nerdy Girl', imagePath: 'assets/profiles/NerdyGirl.png'),
   ProfileData(name: 'Nuken Duke', imagePath: 'assets/profiles/NukenDuke.png'),
+  ProfileData(name: 'Nurse', imagePath: 'assets/profiles/Nurse.png'),
   ProfileData(name: 'Punk', imagePath: 'assets/profiles/Punk.png'),
+  ProfileData(name: 'Roadrunner', imagePath: 'assets/profiles/Roadrunner.png'),
   ProfileData(name: 'Robson', imagePath: 'assets/profiles/Robson.png'),
-  ProfileData(name: 'Sexy Lady', imagePath: 'assets/profiles/SexyLady.png'),
 ];
 
 class StartScreen extends StatefulWidget {

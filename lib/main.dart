@@ -58,8 +58,15 @@ class _MyAppState extends State<MyApp> {
 }
 
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _hasPointer = false;
 
   @override
   Widget build(BuildContext context) {
@@ -114,8 +121,8 @@ class HomeScreen extends StatelessWidget {
             final screenHeight = constraints.maxHeight;
             final screenWidth = constraints.maxWidth;
             final isMobile = screenWidth < 600;
-            // Image takes up to 50% of screen height, max 400px
-            final imageSize = (screenHeight * 0.5).clamp(200.0, isMobile ? 350.0 : 400.0);
+            // Image takes up to 60% of screen height, max 450px
+            final imageSize = (screenHeight * 0.6).clamp(250.0, isMobile ? 400.0 : 450.0);
             
             return Center(
               child: SingleChildScrollView(
@@ -133,6 +140,11 @@ class HomeScreen extends StatelessWidget {
                       },
                       child: MouseRegion(
                         cursor: SystemMouseCursors.click,
+                        onEnter: (_) {
+                          if (!_hasPointer) {
+                            setState(() => _hasPointer = true);
+                          }
+                        },
                         child: Column(
                           children: [
                             Image.asset(
@@ -149,7 +161,7 @@ class HomeScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(24),
                               ),
                               child: Text(
-                                'Tap to Play',
+                                _hasPointer ? 'Click to Play' : 'Tap to Play',
                                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                   color: Theme.of(context).colorScheme.onPrimaryContainer,
                                   fontWeight: FontWeight.w600,
