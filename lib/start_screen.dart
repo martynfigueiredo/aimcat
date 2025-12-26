@@ -5,7 +5,10 @@ import 'package:flutter/material.dart';
 // Formatter to force uppercase
 class UpperCaseTextFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
     return newValue.copyWith(text: newValue.text.toUpperCase());
   }
 }
@@ -25,7 +28,10 @@ const List<ProfileData> profiles = [
   ProfileData(name: 'Cat', imagePath: 'assets/profiles/Cat.png'),
   ProfileData(name: 'Devil Cat', imagePath: 'assets/profiles/DevilCat.png'),
   ProfileData(name: 'Diplomat', imagePath: 'assets/profiles/Diplomat.png'),
-  ProfileData(name: 'Flying Horse', imagePath: 'assets/profiles/FlyingHorse.png'),
+  ProfileData(
+    name: 'Flying Horse',
+    imagePath: 'assets/profiles/FlyingHorse.png',
+  ),
   ProfileData(name: 'Ghost', imagePath: 'assets/profiles/Ghost.png'),
   ProfileData(name: 'Golden Girl', imagePath: 'assets/profiles/GoldenGirl.png'),
   ProfileData(name: 'Grandma', imagePath: 'assets/profiles/Grandma.png'),
@@ -84,10 +90,8 @@ class _StartScreenState extends State<StartScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => GameModeScreen(
-          selectedCat: selectedProfile,
-          username: username,
-        ),
+        builder: (context) =>
+            GameModeScreen(selectedCat: selectedProfile, username: username),
       ),
     );
   }
@@ -123,7 +127,7 @@ class _StartScreenState extends State<StartScreen> {
         final maxWidth = isMobile ? screenWidth : 600.0;
         final crossAxisCount = isMobile ? 3 : 4;
         final spacing = isMobile ? 10.0 : 16.0;
-        
+
         return SafeArea(
           child: Column(
             key: const ValueKey('profile_step'),
@@ -134,9 +138,9 @@ class _StartScreenState extends State<StartScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   'Select your profile',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -158,7 +162,9 @@ class _StartScreenState extends State<StartScreen> {
                   child: ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: maxWidth),
                     child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 16),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 12 : 16,
+                      ),
                       child: GridView.builder(
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: crossAxisCount,
@@ -170,63 +176,13 @@ class _StartScreenState extends State<StartScreen> {
                         itemBuilder: (context, index) {
                           final profile = profiles[index];
                           final isSelected = selectedProfile == index;
-                          return GestureDetector(
+                          return _ProfileCard(
+                            profile: profile,
+                            isSelected: isSelected,
                             onTap: () {
                               _onProfileSelected(index);
                               _goToUsernameStep();
                             },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? Theme.of(context).colorScheme.primary
-                                      : Colors.transparent,
-                                  width: 3,
-                                ),
-                                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Expanded(
-                                    flex: 5,
-                                    child: Container(
-                                      margin: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context).colorScheme.surfaceContainerLow,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Image.asset(
-                                          profile.imagePath,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      bottom: 8,
-                                      left: 4,
-                                      right: 4,
-                                    ),
-                                    child: Text(
-                                      profile.name,
-                                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                        fontSize: 11,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
                           );
                         },
                       ),
@@ -248,7 +204,7 @@ class _StartScreenState extends State<StartScreen> {
         final isMobile = constraints.maxWidth < 600;
         final maxWidth = isMobile ? double.infinity : 400.0;
         final profileSize = isMobile ? 120.0 : 140.0;
-        
+
         return SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -264,7 +220,9 @@ class _StartScreenState extends State<StartScreen> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
@@ -273,7 +231,9 @@ class _StartScreenState extends State<StartScreen> {
                             width: profileSize,
                             height: profileSize,
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surfaceContainerLow,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerLow,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: Theme.of(context).colorScheme.primary,
@@ -291,9 +251,8 @@ class _StartScreenState extends State<StartScreen> {
                           const SizedBox(height: 12),
                           Text(
                             profile.name,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w600),
                           ),
                           TextButton(
                             onPressed: _goBackToProfileStep,
@@ -352,6 +311,91 @@ class _StartScreenState extends State<StartScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+// Profile card widget with hover effect
+class _ProfileCard extends StatefulWidget {
+  final ProfileData profile;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ProfileCard({
+    required this.profile,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  State<_ProfileCard> createState() => _ProfileCardState();
+}
+
+class _ProfileCardState extends State<_ProfileCard> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: widget.isSelected
+                  ? primaryColor
+                  : _isHovered
+                  ? primaryColor.withOpacity(0.6)
+                  : Colors.transparent,
+              width: 3,
+            ),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Expanded(
+                flex: 5,
+                child: Container(
+                  margin: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.asset(
+                      widget.profile.imagePath,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8, left: 4, right: 4),
+                child: Text(
+                  widget.profile.name,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    fontWeight: widget.isSelected || _isHovered
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                    fontSize: 11,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

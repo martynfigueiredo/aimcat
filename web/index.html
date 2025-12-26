@@ -31,6 +31,17 @@
 
   <title>aimcat</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    /* Hide system cursor globally - paw cursor is handled by Flutter */
+    * {
+      cursor: none !important;
+    }
+    /* Ensure flutter canvas also hides cursor */
+    flt-glass-pane, flt-scene-host, flt-semantics-placeholder {
+      cursor: none !important;
+    }
+  </style>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

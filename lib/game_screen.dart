@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flame/game.dart';
 import 'package:flame/components.dart';
+import 'package:share_plus/share_plus.dart';
 import 'aimcat_game.dart';
+import 'start_screen.dart';
 
 class GameScreen extends StatefulWidget {
   final int selectedCat;
@@ -25,7 +27,7 @@ class _GameScreenState extends State<GameScreen> {
   // Global paw cursor
   OverlayEntry? _pawOverlay;
   Offset _pawPosition = const Offset(0, 0);
-  bool _isPawPressed = false; // Track paw press state
+  final bool _isPawPressed = false; // Track paw press state
   final GlobalKey<_AnimatedPawState> _pawKey = GlobalKey<_AnimatedPawState>();
 
   void _updatePawPosition(Offset position) {
@@ -118,7 +120,13 @@ class _GameScreenState extends State<GameScreen> {
         }
       },
       onResetRequest: () {
-        _showResetConfirmation();
+        // Reset directly without confirmation
+        setState(() {
+          finished = false;
+          score = 0;
+          timeLeft = 60;
+        });
+        _startGame();
       },
       onFinishRequest: (finalScore, remainingTime) {
         _showFinishModal(finalScore, remainingTime);
@@ -127,48 +135,6 @@ class _GameScreenState extends State<GameScreen> {
         // Trigger paw press animation when target is hit
         _triggerPawPress();
       },
-    );
-  }
-
-  void _showResetConfirmation() {
-    showDialog(
-      context: context,
-      barrierColor: Colors.black54,
-      builder: (ctx) => Listener(
-        onPointerHover: (event) => _updatePawPosition(event.position),
-        onPointerMove: (event) => _updatePawPosition(event.position),
-        child: MouseRegion(
-          cursor: SystemMouseCursors.none,
-          child: AlertDialog(
-            title: const Text('Reset Game?'),
-            content: const Text('Are you sure you want to reset? Your current progress will be lost.'),
-            actions: [
-              FilledButton.tonal(
-                style: const ButtonStyle(
-                  mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.none),
-                ),
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                style: const ButtonStyle(
-                  mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.none),
-                ),
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  setState(() {
-                    finished = false;
-                    score = 0;
-                    timeLeft = 60;
-                  });
-                  _startGame();
-                },
-                child: const Text('Reset'),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
@@ -186,73 +152,130 @@ class _GameScreenState extends State<GameScreen> {
         child: MouseRegion(
           cursor: SystemMouseCursors.none,
           child: AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          contentPadding: const EdgeInsets.fromLTRB(32, 20, 32, 0),
           title: Row(
             children: [
-              Icon(Icons.emoji_events, color: Theme.of(ctx).colorScheme.tertiary, size: 32),
-              const SizedBox(width: 12),
-              Text('Game Over!', style: Theme.of(ctx).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+              Image.asset(
+                'assets/images/MainScreenCat.png',
+                width: 48,
+                height: 48,
+                fit: BoxFit.contain,
+              ),
+              const SizedBox(width: 16),
+              Text('AimCat the game!', style: Theme.of(ctx).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
             ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Divider(),
-              const SizedBox(height: 16),
+              const Divider(height: 24),
+              const SizedBox(height: 12),
               _buildStatRow(ctx, Icons.star, 'Final Score', '$finalScore pts'),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               _buildStatRow(ctx, Icons.timer, 'Time Used', '${timeUsed}s'),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               _buildStatRow(ctx, Icons.speed, 'Points/Second', accuracy.toStringAsFixed(1)),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               _buildStatRow(ctx, Icons.sports_esports, 'Game Mode', widget.gameMode),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               _buildStatRow(ctx, Icons.person, 'Player', widget.username),
-              const SizedBox(height: 20),
-              const Divider(),
+              const SizedBox(height: 24),
+              const Divider(height: 24),
             ],
           ),
           actionsAlignment: MainAxisAlignment.center,
-          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+          actionsPadding: const EdgeInsets.fromLTRB(32, 8, 32, 28),
           actions: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Expanded(
-                  child: FilledButton.tonalIcon(
-                    style: const ButtonStyle(
-                      mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.none),
-                    ),
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      _removePawOverlay();
-                      Navigator.popUntil(context, (route) => route.isFirst);
-                    },
-                    icon: const Icon(Icons.home),
-                    label: const Text('Quit'),
-                  ),
+                // Home button - circular like game buttons
+                _buildCircularButton(
+                  ctx,
+                  icon: Icons.home,
+                  color: const Color(0xFF78909C),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _removePawOverlay();
+                    Navigator.popUntil(context, (route) => route.isFirst);
+                  },
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: FilledButton.icon(
-                    style: const ButtonStyle(
-                      mouseCursor: WidgetStatePropertyAll(SystemMouseCursors.none),
-                    ),
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      setState(() {
-                        finished = false;
-                        score = 0;
-                        timeLeft = 60;
-                      });
-                      _startGame();
-                    },
-                    icon: const Icon(Icons.play_arrow),
-                    label: const Text('Play Again'),
-                  ),
+                const SizedBox(width: 20),
+                // Share button - circular
+                _buildCircularButton(
+                  ctx,
+                  icon: Icons.share,
+                  color: const Color(0xFF5E35B1),
+                  onPressed: () {
+                    final shareText = '🎯 AimCat Score!\n\n'
+                        '🏆 Score: $finalScore pts\n'
+                        '⏱️ Time: ${timeUsed}s\n'
+                        '📊 Points/sec: ${accuracy.toStringAsFixed(1)}\n'
+                        '🎮 Mode: ${widget.gameMode}\n'
+                        '😺 Player: ${widget.username}\n\n'
+                        'Can you beat my score? Play AimCat now! 🐱';
+                    Share.share(shareText);
+                  },
+                ),
+                const SizedBox(width: 20),
+                // Play again button - circular, highlighted
+                _buildCircularButton(
+                  ctx,
+                  icon: Icons.play_arrow,
+                  color: const Color(0xFF4CAF50),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    setState(() {
+                      finished = false;
+                      score = 0;
+                      timeLeft = 60;
+                    });
+                    _startGame();
+                  },
                 ),
               ],
             ),
           ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCircularButton(
+    BuildContext ctx, {
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    const double buttonSize = 64;
+    return MouseRegion(
+      cursor: SystemMouseCursors.none,
+      child: GestureDetector(
+        onTap: onPressed,
+        child: Container(
+          width: buttonSize,
+          height: buttonSize,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.white.withOpacity(0.8),
+              width: 3,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.4),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: 32,
           ),
         ),
       ),
@@ -266,12 +289,12 @@ class _GameScreenState extends State<GameScreen> {
       children: [
         Row(
           children: [
-            Icon(icon, color: colorScheme.primary, size: 20),
-            const SizedBox(width: 8),
-            Text(label, style: TextStyle(color: colorScheme.onSurfaceVariant)),
+            Icon(icon, color: colorScheme.primary, size: 28),
+            const SizedBox(width: 12),
+            Text(label, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 18)),
           ],
         ),
-        Text(value, style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(value, style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 20)),
       ],
     );
   }
@@ -295,6 +318,20 @@ class _GameScreenState extends State<GameScreen> {
       default:
         return 60;
     }
+  }
+
+  String _getBackgroundPath() {
+    // Get profile name and normalize it (remove spaces, lowercase)
+    final profileName = profiles[widget.selectedCat].name
+        .replaceAll(' ', '')
+        .toLowerCase();
+    
+    // Normalize game mode (remove spaces, lowercase)
+    final gameMode = widget.gameMode
+        .replaceAll(' ', '')
+        .toLowerCase();
+    
+    return 'assets/background/bg-$profileName-$gameMode.png';
   }
 
   @override
@@ -407,30 +444,45 @@ class _GameScreenState extends State<GameScreen> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(borderRadius - borderWidth),
-                    child: GestureDetector(
-                      // Handle touch drag for hitting targets
-                      onPanStart: (details) {
-                        _game.updatePawPosition(
-                          details.localPosition.dx,
-                          details.localPosition.dy,
-                        );
-                      },
-                      onPanUpdate: (details) {
-                        _game.updatePawPosition(
-                          details.localPosition.dx,
-                          details.localPosition.dy,
-                        );
-                      },
-                      child: MouseRegion(
-                        onHover: (event) {
-                          // Update game paw position relative to game panel
-                          _game.updatePawPosition(
-                            event.localPosition.dx,
-                            event.localPosition.dy,
-                          );
-                        },
-                        child: gameWidget,
-                      ),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // Background image
+                        Image.asset(
+                          _getBackgroundPath(),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            // Fallback to solid color if image not found
+                            return Container(color: colorScheme.surface);
+                          },
+                        ),
+                        // Game layer
+                        GestureDetector(
+                          // Handle touch drag for hitting targets
+                          onPanStart: (details) {
+                            _game.updatePawPosition(
+                              details.localPosition.dx,
+                              details.localPosition.dy,
+                            );
+                          },
+                          onPanUpdate: (details) {
+                            _game.updatePawPosition(
+                              details.localPosition.dx,
+                              details.localPosition.dy,
+                            );
+                          },
+                          child: MouseRegion(
+                            onHover: (event) {
+                              // Update game paw position relative to game panel
+                              _game.updatePawPosition(
+                                event.localPosition.dx,
+                                event.localPosition.dy,
+                              );
+                            },
+                            child: gameWidget,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );

@@ -114,74 +114,115 @@ class GameModeScreen extends StatelessWidget {
   }
 
   Widget _buildModeCard(BuildContext context, GameModeData mode, bool isMobile) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => GameScreen(
-                selectedCat: selectedCat,
-                username: username,
-                gameMode: mode.name,
-              ),
+    return _HoverableCard(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => GameScreen(
+              selectedCat: selectedCat,
+              username: username,
+              gameMode: mode.name,
             ),
-          );
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Image area
-            Expanded(
-              flex: 4,
-              child: Container(
-                color: Theme.of(context).colorScheme.surfaceContainerLow,
-                child: Image.asset(
-                  mode.imagePath,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Center(
-                      child: Icon(
-                        mode.icon,
-                        size: isMobile ? 56 : 72,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            // Text area
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    mode.name,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
+          ),
+        );
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Image area
+          Expanded(
+            flex: 4,
+            child: Container(
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
+              child: Image.asset(
+                mode.imagePath,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Center(
+                    child: Icon(
+                      mode.icon,
+                      size: isMobile ? 56 : 72,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
-                    maxLines: 1,
+                  );
+                },
+              ),
+            ),
+          ),
+          // Text area
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  mode.name,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (!isMobile) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    mode.description,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (!isMobile) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      mode.description,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
                 ],
-              ),
+              ],
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Hoverable card widget with purple border on hover
+class _HoverableCard extends StatefulWidget {
+  final VoidCallback onTap;
+  final Widget child;
+
+  const _HoverableCard({
+    required this.onTap,
+    required this.child,
+  });
+
+  @override
+  State<_HoverableCard> createState() => _HoverableCardState();
+}
+
+class _HoverableCardState extends State<_HoverableCard> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _isHovered ? primaryColor : Colors.transparent,
+              width: 3,
+            ),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: widget.child,
         ),
       ),
     );
