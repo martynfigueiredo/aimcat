@@ -329,7 +329,7 @@ class _GameScreenState extends State<GameScreen> {
         .replaceAll(' ', '')
         .toLowerCase();
     
-    return 'assets/background/bg-$characterName-$gameMode.png';
+    return 'assets/background/bg-$characterName-$gameMode.jpg';
   }
 
   @override
