@@ -8,8 +8,8 @@ import 'start_screen.dart';
 class GameScreen extends StatefulWidget {
   final int selectedCat;
   final String username;
-  final String gameMode;
-  const GameScreen({super.key, required this.selectedCat, required this.username, required this.gameMode});
+  final String gameLevel;
+  const GameScreen({super.key, required this.selectedCat, required this.username, required this.gameLevel});
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -77,30 +77,38 @@ class _GameScreenState extends State<GameScreen> {
 
   void _startGame() {
     int duration = 60;
-    switch (widget.gameMode) {
+    int initialScore = 0;
+    
+    switch (widget.gameLevel) {
       case 'Baby':
       case 'Toddler':
-        duration = 120;
-        break;
       case 'Grandma':
-        duration = 180;
+        duration = 30; // User requested 30 seconds
         break;
       case 'SpeedRun':
-        duration = 60;
+      case 'Hacker':
+        duration = 10;
         break;
       case 'Marathon':
-        duration = 300;
+        duration = 90; // User requested 90s
         break;
       case 'Ultra Marathon':
-        duration = 7200;
+        duration = 300; // 5 minutes
         break;
       case 'Sayajin':
-      case 'Hacker':
-        duration = 120;
+        duration = 30;
+        initialScore = 100;
         break;
     }
+    
+    if (widget.gameLevel == 'Hacker') {
+      initialScore = -100;
+    }
+
     _game = AimCatGame(
       gameDuration: duration,
+      selectedCharacter: widget.selectedCat,
+      gameLevel: widget.gameLevel,
       onGameUpdate: (s, t, f) {
         if (mounted) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -121,8 +129,8 @@ class _GameScreenState extends State<GameScreen> {
         // Reset directly without confirmation
         setState(() {
           finished = false;
-          score = 0;
-          timeLeft = 60;
+          score = initialScore;
+          timeLeft = duration.toDouble();
         });
         _startGame();
       },
@@ -134,6 +142,12 @@ class _GameScreenState extends State<GameScreen> {
         _triggerPawPress();
       },
     );
+    
+    // Set initial score in state
+    setState(() {
+      score = initialScore;
+      timeLeft = duration.toDouble();
+    });
   }
 
   void _showFinishModal(int finalScore, double remainingTime) {
@@ -175,7 +189,7 @@ class _GameScreenState extends State<GameScreen> {
               const SizedBox(height: 16),
               _buildStatRow(ctx, Icons.speed, 'Points/Second', accuracy.toStringAsFixed(1)),
               const SizedBox(height: 16),
-              _buildStatRow(ctx, Icons.sports_esports, 'Game Mode', widget.gameMode),
+              _buildStatRow(ctx, Icons.sports_esports, 'Level', widget.gameLevel),
               const SizedBox(height: 16),
               _buildStatRow(ctx, Icons.person, 'Player', widget.username),
               const SizedBox(height: 24),
@@ -210,7 +224,7 @@ class _GameScreenState extends State<GameScreen> {
                         '🏆 Score: $finalScore pts\n'
                         '⏱️ Time: ${timeUsed}s\n'
                         '📊 Points/sec: ${accuracy.toStringAsFixed(1)}\n'
-                        '🎮 Mode: ${widget.gameMode}\n'
+                        '🎮 Level: ${widget.gameLevel}\n'
                         '😺 Player: ${widget.username}\n\n'
                         'Can you beat my score? Play AimCat now! 🐱';
                     Share.share(shareText);
@@ -287,18 +301,18 @@ class _GameScreenState extends State<GameScreen> {
       children: [
         Row(
           children: [
-            Icon(icon, color: colorScheme.primary, size: 28),
+            Icon(icon, color: colorScheme.primary, size: 32), // Bigger Icon
             const SizedBox(width: 12),
-            Text(label, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 18)),
+            Text(label, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 22)), // Bigger Label
           ],
         ),
-        Text(value, style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 20)),
+        Text(value, style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 26)), // Bigger Value
       ],
     );
   }
 
   int _getDuration() {
-    switch (widget.gameMode) {
+    switch (widget.gameLevel) {
       case 'Baby':
       case 'Toddler':
         return 120;
@@ -324,12 +338,12 @@ class _GameScreenState extends State<GameScreen> {
         .replaceAll(' ', '')
         .toLowerCase();
     
-    // Normalize game mode (remove spaces, lowercase)
-    final gameMode = widget.gameMode
+    // Normalize game level (remove spaces, lowercase)
+    final gameLevel = widget.gameLevel
         .replaceAll(' ', '')
         .toLowerCase();
     
-    return 'assets/background/bg-$characterName-$gameMode.jpg';
+    return 'assets/background/bg-$characterName-$gameLevel.jpg';
   }
 
   @override
@@ -354,7 +368,7 @@ class _GameScreenState extends State<GameScreen> {
           onPressed: () => Navigator.pop(context),
           tooltip: 'Back to Level Selection',
         ),
-        title: Text('AimCat - ${widget.gameMode}'),
+        title: Text('AimCat - ${widget.gameLevel}'),
         centerTitle: true,
       ),
       body: Listener(

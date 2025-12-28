@@ -7,6 +7,7 @@ import 'package:flame/game.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/particles.dart';
 import 'package:flutter/material.dart';
+import 'start_screen.dart'; // For character data
 
 // Target configurations with icons and colors
 class TargetConfig {
@@ -33,20 +34,7 @@ class TargetConfig {
 
 // All available targets
 class TargetConfigs {
-  // Pre-cached lists by value for performance (avoid repeated .where().toList())
-  static final List<TargetConfig> _positive5 = positive.where((t) => t.value == 5).toList();
-  static final List<TargetConfig> _positive10 = positive.where((t) => t.value == 10).toList();
-  static final List<TargetConfig> _positive20 = positive.where((t) => t.value == 20).toList();
-  static final List<TargetConfig> _positive30 = positive.where((t) => t.value == 30).toList();
-  static final List<TargetConfig> _positive40 = positive.where((t) => t.value == 40).toList();
-  static final List<TargetConfig> _positive50 = positive.where((t) => t.value == 50).toList();
-  static final List<TargetConfig> _positiveTimeBonus = positive.where((t) => t.timeBonus > 0).toList();
-  
-  static final List<TargetConfig> _negative10 = negative.where((t) => t.value == -10).toList();
-  static final List<TargetConfig> _negative30 = negative.where((t) => t.value == -30).toList();
-  static final List<TargetConfig> _negative50 = negative.where((t) => t.value == -50).toList();
-  static final List<TargetConfig> _negative100 = negative.where((t) => t.value == -100).toList();
-  static final List<TargetConfig> _negativeTimePenalty = negative.where((t) => t.timeBonus < 0).toList();
+
 
   // Positive targets (sorted by value) - Higher value = bigger
   static const List<TargetConfig> positive = [
@@ -80,13 +68,13 @@ class TargetConfigs {
       name: 'Heart',
     ),
     TargetConfig(
-      icon: Icons.baby_changing_station,
-      color: Color(0xFF81D4FA),
+      icon: Icons.text_fields,
+      color: Color(0xFF2196F3),
       value: 10,
       duration: 2.0,
       isPositive: true,
       size: 68,
-      name: 'Baby Bottle',
+      name: 'Letter A',
     ),
     TargetConfig(
       icon: Icons.apple,
@@ -531,17 +519,24 @@ class AimCatGame extends FlameGame
     return false;
   }
 
+  double timeLeft = 0;
+  
+  // Accumulators for manual timing
+  double _spawnTimer = 0;
+  double _secondsAccumulator = 0; // For UI updates
   late PositionComponent paw;
-  late TimerComponent gameTimer;
+
   late TextComponent comboText;
   int score = 0;
-  double timeLeft = 60;
+  // double timeLeft = 60; // This line was removed as per instruction to avoid duplicate declaration
   int combo = 0; // Consecutive positive hits
   final void Function(int, double, bool) onGameUpdate;
   final void Function() onResetRequest;
   final void Function(int score, double timeLeft) onFinishRequest;
   final void Function()? onTargetHit; // Callback when a target is hit
   final int gameDuration;
+  final int selectedCharacter; // Character index for powers
+  final String gameLevel; // Current game level/mode
   final List<Target> targets = [];
   final Random _rand = Random();
 
@@ -549,21 +544,167 @@ class AimCatGame extends FlameGame
     required this.onGameUpdate,
     required this.onResetRequest,
     required this.onFinishRequest,
+    required this.selectedCharacter,
+    required this.gameLevel,
     this.onTargetHit,
     this.gameDuration = 60,
   });
 
+  // Get spawn interval multiplier based on level
+  double _getSpawnIntervalMultiplier() {
+    switch (gameLevel) {
+      case 'SpeedRun':
+        return 0.25; // 4x faster
+      case 'Hacker':
+        return 0.125; // 8x faster
+      case 'Baby':
+      case 'Toddler':
+      case 'Grandma':
+      case 'Sayajin':
+        return 0.5; // 2x faster
+      default:
+        return 1.0;
+    }
+  }
+
+  // Get target duration multiplier based on level
+  double _getTargetDurationMultiplier() {
+    switch (gameLevel) {
+      case 'Baby':
+        return 8.0; // Stays 8x longer (4x previous 2.0)
+      case 'Toddler':
+        return 2.0; // Stays 2x longer
+      case 'Hacker':
+        return 0.125; // Disappears 8x faster
+      default:
+        return 1.0;
+    }
+  }
+
+  // Get score value for a target based on level rules
+  int _getLevelScoreMultiplier(TargetConfig config) {
+    if (config.isPositive) {
+      // Good targets rules
+      switch (gameLevel) {
+        case 'Baby':
+          return 1; // Always worth 1
+        case 'Toddler':
+        case 'Sayajin':
+          return config.value * 2; // Worth 2x
+        case 'Grandma':
+          return (config.value * 0.2).round(); // Worth 20%
+        case 'Hacker':
+          return 200; // Fixed value
+        default:
+          return config.value;
+      }
+    } else {
+      // Bad targets rules
+      switch (gameLevel) {
+        case 'Toddler':
+          return 0; // Worth 0 (no penalty)
+        case 'Grandma':
+        case 'Sayajin':
+          return (config.value * 0.5).round(); // 50% damage reduced
+        case 'Hacker':
+          return 200; // Positive points for bad targets!
+        default:
+          return config.value;
+      }
+    }
+  }
+  
+  // Check if combo system is enabled for this level
+  bool get _isComboEnabled {
+    const disabledLevels = ['Baby', 'Toddler', 'Grandma', 'Ultra Marathon'];
+    return !disabledLevels.contains(gameLevel);
+  }
+
+  // Calculate character-specific power multiplier for a target
+  int _getCharacterMultiplier(String targetName) {
+    final character = characters[selectedCharacter];
+    
+    // Character-specific multipliers based on powers
+    switch (character.name) {
+      case 'Bidoque':
+      case 'Golden Girl':
+        if (targetName == 'Letter A') return 10;
+        if (targetName == 'Heart') return 5;
+        break;
+      case 'Capybara':
+      case 'Koi':
+        if (targetName == 'Water') return 10;
+        break;
+      case 'Cat':
+        if (targetName == 'Bunny') return 15;
+        break;
+      case 'Devil Cat':
+        if (targetName == 'Rat') return 300; // Special: converts -50 to +300
+        break;
+      case 'Diplomat':
+        if (targetName == 'Diamond') return 10;
+        break;
+      case 'Flying Horse':
+        if (targetName == 'Star') return 10;
+        break;
+      case 'Librarian':
+        if (targetName == 'Letter A') return 10;
+        break;
+      case 'Mom':
+        if (targetName == 'Fruits') return 5;
+        if (targetName == 'Heart') return 5;
+        break;
+      case 'Moustache':
+        if (targetName == 'Trophy') return 10;
+        break;
+      case 'Nuken Duke':
+      case 'Robson':
+        if (targetName == 'Beer') return 10;
+        break;
+      case 'Nurse':
+        if (targetName == 'Heart') return 10;
+        break;
+      case 'Punk':
+        if (targetName == 'Beer') return 10;
+        if (targetName == 'Cigarette') return -1; // Special: -50 becomes +100
+        break;
+    }
+    return 1; // Default: no multiplier
+  }
+
+  // Get initial time bonus for character
+  int _getInitialTimeBonus() {
+    final character = characters[selectedCharacter];
+    switch (character.name) {
+      case 'Ghost':
+        return 20;
+      case 'Nerdy':
+      case 'Nerdy Girl':
+        return 10;
+      case 'Roadrunner':
+        return 30;
+      default:
+        return 0;
+    }
+  }
+
+  // Get size multiplier for character (Grandma only)
+  double _getSizeMultiplier() {
+    final character = characters[selectedCharacter];
+    return character.name == 'Grandma' ? 1.3 : 1.0;
+  }
+
   @override
   Future<void> onLoad() async {
-    // Scaled sizes for responsive UI
-    final double fontSize = 24 * scaleFactor;
-    final double pawSize = 56 * scaleFactor;
+    // Scaled sizes for responsive UI (Increased for better visibility)
+    final double fontSize = 32 * scaleFactor; 
+    final double pawSize = 72 * scaleFactor;
 
     // Pre-cache emoji text to avoid first-render delay
     final emojiPreloader = TextComponent(
       text: '💔',
       position: Vector2(-100, -100), // Off-screen
-      textRenderer: TextPaint(style: const TextStyle(fontSize: 32)),
+      textRenderer: TextPaint(style: const TextStyle(fontSize: 40)),
     );
     add(emojiPreloader);
     emojiPreloader.removeFromParent();
@@ -578,7 +719,7 @@ class AimCatGame extends FlameGame
 
     // Score panel background
     final panelPadding = 8.0 * scaleFactor;
-    final panelWidth = isMobile ? 180.0 * scaleFactor : 220.0 * scaleFactor;
+    final panelWidth = isMobile ? 220.0 * scaleFactor : 280.0 * scaleFactor; // Wider panel
     final panelHeight = fontSize * 5.5;
     add(
       ScorePanel(
@@ -671,8 +812,8 @@ class AimCatGame extends FlameGame
     add(comboText);
 
     // Button size
-    final buttonSize = 48.0 * scaleFactor;
-    final buttonSpacing = 10.0 * scaleFactor;
+    final buttonSize = 64.0 * scaleFactor; // Bigger buttons
+    final buttonSpacing = 12.0 * scaleFactor;
 
     // Finish Button (checkmark icon)
     finishButton = TappableButton(
@@ -704,42 +845,15 @@ class AimCatGame extends FlameGame
     );
     add(restartButton);
 
-    gameTimer = TimerComponent(
-      period: gameDuration.toDouble(),
-      removeOnFinish: true,
-      onTick: () {
-        if (!stopped) onGameUpdate(score, 0, true);
-      },
-    );
-    add(gameTimer);
-    timeLeft = gameDuration.toDouble();
-    add(
-      TimerComponent(
-        period: 1,
-        repeat: true,
-        onTick: () {
-          if (!stopped && timeLeft > 0) {
-            timeLeft--;
-            if (timeLeft < 0) timeLeft = 0;
-            timerText.text = 'Time: ${timeLeft.toInt()}';
-            onGameUpdate(score, timeLeft, false);
-          }
-        },
-      ),
-    );
-
-    // Spawn a new target every 0.7 seconds
-    add(
-      TimerComponent(
-        period: 0.7,
-        repeat: true,
-        onTick: () {
-          if (!stopped && timeLeft > 0) {
-            _spawnTarget();
-          }
-        },
-      ),
-    );
+    // Initialize game state (starts the game loop logic)
+    resetGame();
+    
+    // Apply character-specific initial time bonus (after reset)
+    final timeBonus = _getInitialTimeBonus();
+    if (timeBonus > 0) {
+      timeLeft += timeBonus;
+      timerText.text = 'Time: ${timeLeft.toInt()}';
+    }
   }
 
   void resetGame() {
@@ -747,190 +861,179 @@ class AimCatGame extends FlameGame
     score = 0;
     combo = 0;
     timeLeft = gameDuration.toDouble();
+    _spawnTimer = 0;
+    _secondsAccumulator = 0;
+    
     scoreText.text = 'Score: 0';
     timerText.text = 'Time: $gameDuration';
     comboText.text = '';
     lastHitText.text = '';
+    
     for (final t in List<Target>.from(targets)) {
       t.removeFromParent();
     }
     targets.clear();
+    
+    // Clear any existing timers
     children.whereType<TimerComponent>().forEach(remove);
-    gameTimer = TimerComponent(
-      period: gameDuration.toDouble(),
-      removeOnFinish: true,
-      onTick: () {
-        if (!stopped) onGameUpdate(score, 0, true);
-      },
-    );
-    add(gameTimer);
-    add(
-      TimerComponent(
-        period: 1,
-        repeat: true,
-        onTick: () {
-          if (!stopped && timeLeft > 0) {
-            timeLeft--;
-            if (timeLeft < 0) timeLeft = 0;
-            timerText.text = 'Time: ${timeLeft.toInt()}';
-            onGameUpdate(score, timeLeft, false);
-          }
-        },
-      ),
-    );
-    add(
-      TimerComponent(
-        period: 0.7,
-        repeat: true,
-        onTick: () {
-          if (!stopped && timeLeft > 0) {
-            _spawnTarget();
-          }
-        },
-      ),
-    );
+    
+    // Trigger initial update
+    onGameUpdate(score, gameDuration.toDouble(), false);
+    
+    // Initial spawn
+    _spawnTarget();
   }
 
   void _spawnTarget() {
     if (stopped || timeLeft <= 0) return;
 
-    // 70% chance for positive, 30% for negative
-    final isPositive = _rand.nextDouble() < 0.7;
-
-    TargetConfig config;
-    if (isPositive) {
-      // Use pre-cached lists for performance
-      // 5 pts: 25%, 10 pts: 25%, 20 pts: 20%, 30 pts: 12%, 40 pts: 8%, 50 pts: 5%, Time bonus: 5%
-      final roll = _rand.nextDouble();
-      if (roll < 0.25) {
-        config = TargetConfigs._positive5[_rand.nextInt(TargetConfigs._positive5.length)];
-      } else if (roll < 0.50) {
-        config = TargetConfigs._positive10[_rand.nextInt(TargetConfigs._positive10.length)];
-      } else if (roll < 0.70) {
-        config = TargetConfigs._positive20[_rand.nextInt(TargetConfigs._positive20.length)];
-      } else if (roll < 0.82) {
-        config = TargetConfigs._positive30[_rand.nextInt(TargetConfigs._positive30.length)];
-      } else if (roll < 0.90) {
-        config = TargetConfigs._positive40[_rand.nextInt(TargetConfigs._positive40.length)];
-      } else if (roll < 0.95) {
-        config = TargetConfigs._positive50[_rand.nextInt(TargetConfigs._positive50.length)];
+    final isPositive = _rand.nextBool();
+    List<TargetConfig> candidates;
+    
+    // Filter candidates based on level rules
+    if (gameLevel == 'Baby') {
+      // Baby level: Only positive targets AND No clocks
+      candidates = TargetConfigs.positive.where((t) => t.icon != Icons.schedule).toList();
+    } else if (gameLevel == 'Toddler' || gameLevel == 'Grandma') {
+      // Toddler and Grandma levels: No clocks
+      if (isPositive) {
+        candidates = TargetConfigs.positive.where((t) => t.icon != Icons.schedule).toList();
       } else {
-        config = TargetConfigs._positiveTimeBonus[_rand.nextInt(TargetConfigs._positiveTimeBonus.length)];
+        candidates = TargetConfigs.negative.where((t) => t.icon != Icons.timer_off).toList();
       }
     } else {
-      // Use pre-cached lists for performance
-      // -10 pts: 30%, -30 pts: 40%, -50 pts: 20%, -100 pts: 5%, Time penalty: 5%
-      final roll = _rand.nextDouble();
-      if (roll < 0.30) {
-        config = TargetConfigs._negative10[_rand.nextInt(TargetConfigs._negative10.length)];
-      } else if (roll < 0.70) {
-        config = TargetConfigs._negative30[_rand.nextInt(TargetConfigs._negative30.length)];
-      } else if (roll < 0.90) {
-        config = TargetConfigs._negative50[_rand.nextInt(TargetConfigs._negative50.length)];
-      } else if (roll < 0.95) {
-        config = TargetConfigs._negative100[_rand.nextInt(TargetConfigs._negative100.length)];
-      } else {
-        config = TargetConfigs._negativeTimePenalty[_rand.nextInt(TargetConfigs._negativeTimePenalty.length)];
-      }
+      // Standard logic
+      candidates = isPositive ? TargetConfigs.positive : TargetConfigs.negative;
     }
 
-    // Scale target size based on screen size (minimum 0.7x for small screens)
-    final targetScale = scaleFactor.clamp(0.7, 1.2);
-    final scaledSize = config.size * targetScale;
+    if (candidates.isEmpty) return;
 
-    // Keep targets within bounds with padding from edges
-    final padding = uiPadding + scaledSize / 2;
-    final spawnAreaTop = uiPadding + 50 * scaleFactor; // Below UI elements
+    final config = candidates[_rand.nextInt(candidates.length)];
+    
+    // Calculate total size scale
+    final sizeModifier = _getSizeMultiplier();
+    
+    // Calculate adjusted duration
+    final adjustedDuration = config.duration * _getTargetDurationMultiplier();
+    
+    // Calculate scaled size for position calculations
+    final scaledSize = config.size * scaleFactor * sizeModifier;
 
     final target = Target(
       config: config,
       position: Vector2(
-        padding + _rand.nextDouble() * (size.x - scaledSize - padding * 2),
-        spawnAreaTop +
-            _rand.nextDouble() * (size.y - scaledSize - spawnAreaTop - padding),
+        _rand.nextDouble() * (size.x - scaledSize),
+        uiPadding * 2 + _rand.nextDouble() * (size.y - uiPadding * 3 - scaledSize), // Avoid UI area
       ),
-      onHit: _onTargetHit,
-      sizeScale: targetScale,
+      sizeScale: scaleFactor * sizeModifier,
+      duration: adjustedDuration,
+      onHit: (t) => _onTargetHit(t),
+      onMiss: (t) => _onTargetMiss(t),
     );
-    add(target);
     targets.add(target);
-    add(
-      TimerComponent(
-        period: config.duration,
-        removeOnFinish: true,
-        onTick: () {
-          if (!stopped && targets.contains(target) && !target.isHit) {
-            // If a positive target expires without being hit, break the combo
-            if (target.config.isPositive && combo > 0) {
-              if (combo >= 5) {
-                _spawnComboLostText(target.position + target.size / 2);
-              }
-              combo = 0;
-              comboText.text = '';
-            }
+    add(target);
+  }
 
-            // Fade out animation when time expires
-            target.add(
-              ScaleEffect.to(
-                Vector2.all(0.3),
-                EffectController(duration: 0.2, curve: Curves.easeIn),
-                onComplete: () {
-                  target.removeFromParent();
-                  targets.remove(target);
-                },
-              ),
-            );
-          }
-        },
-      ),
-    );
+  void _onTargetMiss(Target target) {
+    if (stopped) return;
+    targets.remove(target);
+    target.removeFromParent();
+
+    // If a positive target expires without being hit, break the combo (only if enabled)
+    if (_isComboEnabled && target.config.isPositive && combo > 0) {
+      if (combo >= 5) {
+        _spawnComboLostText(target.position + target.size / 2);
+      }
+      combo = 0;
+      comboText.text = '';
+    }
   }
 
   void _onTargetHit(Target target) {
-    if (target.isHit) return; // Prevent multiple hits
-    target.isHit = true;
+    if (stopped) return;
+    targets.remove(target);
+    target.removeFromParent();
 
-    // Notify Flutter to animate paw
+    // Trigger callback for visual effects (paw press)
     onTargetHit?.call();
 
+    // Calculate base value based on level rules
+    int value = _getLevelScoreMultiplier(target.config);
+    
+    // Apply character multiplier (usually multiplies the base value)
+    int multiplier = _getCharacterMultiplier(target.config.name);
+    
+    // Special handling for Hacker level: Character multipliers shouldn't override the fixed 200 pts
+    // Unless it's a special conversion logic, but user request says "All targets worth 200"
+    if (gameLevel != 'Hacker') {
+      if (multiplier != 1) {
+        if (target.config.name == 'Rat' && characters[selectedCharacter].name == 'Devil Cat') {
+          // Special case: Rate becomes +300
+          value = 300;
+        } else if (target.config.name == 'Cigarette' && characters[selectedCharacter].name == 'Punk') {
+          // Special case: Cigarette becomes +100
+          value = 100;
+        } else {
+          // Standard multiplier
+          value *= multiplier;
+        }
+      }
+    }
+    
+    // Apply Baby level fixed +10 bonus per hit (on top of the base 1 point)
+    if (gameLevel == 'Baby') {
+      value += 10;
+    }
+    
     final hitPosition = target.position + target.size / 2;
     final isPositive = target.config.isPositive;
 
     // Calculate combo bonus
     int bonus = 0;
-    int totalValue = target.config.value;
+    int totalValue = value; // Use the calculated value as the base for totalValue
 
-    if (isPositive) {
-      combo++;
-      // Apply combo bonus: 5+ hits = +10, 10+ hits = +50
-      if (combo >= 10) {
-        bonus = 50;
-      } else if (combo >= 5) {
-        bonus = 10;
-      }
-      totalValue += bonus;
+    if (isPositive || (totalValue > 0 && !isPositive)) { // Treat converted negatives as positive
+      if (_isComboEnabled) {
+        combo++;
+        
+        // Progressive Combo Bonus: +10 for every 5 hits
+        // 5-9 hits: +10
+        // 10-14 hits: +20
+        // 15-19 hits: +30
+        // etc.
+        if (combo >= 5) {
+          bonus = (combo ~/ 5) * 10;
+        } else {
+          bonus = 0;
+        }
+        
+        totalValue += bonus;
 
-      // Update combo display
-      if (combo >= 5) {
-        final comboLevel = combo >= 10 ? '🔥 SUPER COMBO' : '⭐ COMBO';
-        comboText.text = '$comboLevel x$combo (+$bonus)';
-        comboText.textRenderer = TextPaint(
-          style: TextStyle(
-            fontSize: combo >= 10 ? 22 : 20,
-            color: combo >= 10 ? Colors.deepOrange : Colors.orangeAccent,
-            fontWeight: FontWeight.bold,
-          ),
-        );
-      } else {
-        comboText.text = combo > 1 ? 'x$combo' : '';
+        // Update combo display
+        if (combo >= 5) {
+          final isSuper = bonus >= 50; // Super combo at 25+ hits
+          final comboLevel = isSuper ? '🔥 SUPER COMBO' : '⭐ COMBO';
+          comboText.text = '$comboLevel x$combo (+$bonus)';
+          comboText.textRenderer = TextPaint(
+            style: TextStyle(
+              fontSize: isSuper ? 24 : 20,
+              color: isSuper ? Colors.deepOrange : Colors.orangeAccent,
+              fontWeight: FontWeight.bold,
+            ),
+          );
+        } else {
+          comboText.text = combo > 1 ? 'x$combo' : '';
+        }
       }
     } else {
-      // Negative target breaks the combo
-      if (combo >= 5) {
-        _spawnComboLostText(hitPosition);
+      // Negative target breaks the combo (only if enabled)
+      if (_isComboEnabled) {
+        if (combo >= 5) {
+          _spawnComboLostText(hitPosition);
+        }
+        combo = 0;
+        comboText.text = '';
       }
-      combo = 0;
-      comboText.text = '';
     }
 
     score += totalValue;
@@ -1370,6 +1473,36 @@ class AimCatGame extends FlameGame
   @override
   void update(double dt) {
     super.update(dt);
+    
+    if (!stopped) {
+      // 1. Update Game Timer
+      timeLeft -= dt;
+      
+      // Update UI every second (or when time runs out)
+      _secondsAccumulator += dt;
+      if (_secondsAccumulator >= 1.0 || timeLeft <= 0) {
+        _secondsAccumulator = 0; // Reset accumulator
+        timerText.text = 'Time: ${timeLeft.ceil()}';
+        onGameUpdate(score, timeLeft, false);
+      }
+
+      // Check for Game Over
+      if (timeLeft <= 0) {
+        timeLeft = 0;
+        endGame();
+        onGameUpdate(score, 0, true);
+        return; // Stop processing this frame
+      }
+
+      // 2. Update Spawn Timer
+      _spawnTimer += dt;
+      final spawnInterval = 0.7 * _getSpawnIntervalMultiplier();
+      if (_spawnTimer >= spawnInterval) {
+        _spawnTimer = 0;
+        _spawnTarget();
+      }
+    }
+
     if (_shakeTime > 0) {
       _shakeTime -= dt;
       final intensity = (_shakeTime / 0.15) * 3;
@@ -1441,7 +1574,9 @@ class AimCatGame extends FlameGame
 class Target extends PositionComponent with TapCallbacks {
   final TargetConfig config;
   final void Function(Target) onHit;
+  final void Function(Target)? onMiss;
   final double sizeScale;
+  final double? duration;
   bool isHit = false; // Prevent multiple hits during animation
   bool _isHovered = false;
   // Cache game reference to avoid findGame() every frame
@@ -1454,7 +1589,9 @@ class Target extends PositionComponent with TapCallbacks {
     required this.config,
     required Vector2 position,
     required this.onHit,
+    this.onMiss,
     this.sizeScale = 1.0,
+    this.duration,
   }) : super(position: position, size: Vector2.all(config.size * sizeScale));
 
   @override
@@ -1505,6 +1642,31 @@ class Target extends PositionComponent with TapCallbacks {
         EffectController(duration: 0.2, curve: Curves.easeOutBack),
       ),
     );
+
+    // Auto-remove target after duration (simulating missed target)
+    if (duration != null || config.duration > 0) {
+      final targetDuration = duration ?? config.duration;
+      add(
+        TimerComponent(
+          period: targetDuration,
+          removeOnFinish: true,
+          onTick: () {
+            if (!isHit) {
+              // Fade out animation
+              add(
+                ScaleEffect.to(
+                  Vector2.all(0.3),
+                  EffectController(duration: 0.2, curve: Curves.easeIn),
+                  onComplete: () {
+                     onMiss?.call(this);
+                  },
+                ),
+              );
+            }
+          },
+        ),
+      );
+    }
   }
 
   @override
