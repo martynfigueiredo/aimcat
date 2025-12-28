@@ -118,24 +118,7 @@ const List<CharacterData> characters = [
     badAt: 'Thumbtack',
     description: 'Wise elder with enhanced vision.',
   ),
-  CharacterData(
-    name: 'Koi',
-    imagePath: 'assets/profiles/Koi.jpg',
-    xp: 2,
-    power: 'Water 10x',
-    goodAt: 'Water',
-    badAt: 'Poison',
-    description: 'Graceful swimmer in harmony with water.',
-  ),
-  CharacterData(
-    name: 'Librarian',
-    imagePath: 'assets/profiles/Librarian.jpg',
-    xp: 2,
-    power: 'Letter A 10x',
-    goodAt: 'Letter A',
-    badAt: 'Fire',
-    description: 'Book lover who values knowledge.',
-  ),
+
   CharacterData(
     name: 'Mom',
     imagePath: 'assets/profiles/Mom.jpg',

@@ -571,13 +571,13 @@ class AimCatGame extends FlameGame
   double _getTargetDurationMultiplier() {
     switch (gameLevel) {
       case 'Baby':
-        return 8.0; // Stays 8x longer (4x previous 2.0)
+        return 4.0; // 2x faster than previous 8.0
       case 'Toddler':
-        return 2.0; // Stays 2x longer
+        return 1.0; // 2x faster than previous 2.0
       case 'Hacker':
-        return 0.125; // Disappears 8x faster
+        return 0.015625; // 2x faster than previous 0.03125 (64x total speed)
       default:
-        return 1.0;
+        return 0.5; // 2x faster than previous 1.0
     }
   }
 
@@ -632,7 +632,6 @@ class AimCatGame extends FlameGame
         if (targetName == 'Heart') return 5;
         break;
       case 'Capybara':
-      case 'Koi':
         if (targetName == 'Water') return 10;
         break;
       case 'Cat':
@@ -647,9 +646,7 @@ class AimCatGame extends FlameGame
       case 'Flying Horse':
         if (targetName == 'Star') return 10;
         break;
-      case 'Librarian':
-        if (targetName == 'Letter A') return 10;
-        break;
+
       case 'Mom':
         if (targetName == 'Fruits') return 5;
         if (targetName == 'Heart') return 5;
@@ -674,6 +671,9 @@ class AimCatGame extends FlameGame
 
   // Get initial time bonus for character
   int _getInitialTimeBonus() {
+    // Character time bonuses are disabled for Hacker level
+    if (gameLevel == 'Hacker') return 0;
+    
     final character = characters[selectedCharacter];
     switch (character.name) {
       case 'Ghost':

@@ -4,6 +4,7 @@ import 'package:flame/game.dart';
 import 'package:share_plus/share_plus.dart';
 import 'aimcat_game.dart';
 import 'start_screen.dart';
+import 'high_score_service.dart';
 
 class GameScreen extends StatefulWidget {
   final int selectedCat;
@@ -19,6 +20,7 @@ class _GameScreenState extends State<GameScreen> {
   int score = 0;
   double timeLeft = 60;
   bool finished = false;
+  int highScore = 0;
   bool _isTouchDevice = false; // Track if using touch input
 
   late AimCatGame _game;
@@ -143,6 +145,15 @@ class _GameScreenState extends State<GameScreen> {
       },
     );
     
+    // Load high score for this level
+    HighScoreService.getHighScore(widget.gameLevel).then((val) {
+      if (mounted) {
+        setState(() {
+          highScore = val;
+        });
+      }
+    });
+    
     // Set initial score in state
     setState(() {
       score = initialScore;
@@ -150,10 +161,18 @@ class _GameScreenState extends State<GameScreen> {
     });
   }
 
-  void _showFinishModal(int finalScore, double remainingTime) {
+  void _showFinishModal(int finalScore, double remainingTime) async {
+    // Save score and check if it's a new record
+    final bool isNewRecord = await HighScoreService.saveScore(widget.gameLevel, finalScore);
+    if (isNewRecord) {
+      highScore = finalScore;
+    }
+
     final int timeUsed = (_getDuration() - remainingTime.toInt()).clamp(0, _getDuration());
     final double accuracy = finalScore > 0 ? (finalScore / (timeUsed > 0 ? timeUsed : 1)).clamp(0, 100) : 0;
     
+    if (!mounted) return;
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -184,6 +203,16 @@ class _GameScreenState extends State<GameScreen> {
               const Divider(height: 24),
               const SizedBox(height: 12),
               _buildStatRow(ctx, Icons.star, 'Final Score', '$finalScore pts'),
+              if (highScore > 0) ...[
+                const SizedBox(height: 8),
+                _buildStatRow(
+                  ctx, 
+                  Icons.emoji_events, 
+                  'Personal Best', 
+                  '$highScore pts',
+                  isHighlighted: finalScore >= highScore && finalScore > 0,
+                ),
+              ],
               const SizedBox(height: 16),
               _buildStatRow(ctx, Icons.timer, 'Time Used', '${timeUsed}s'),
               const SizedBox(height: 16),
@@ -294,19 +323,21 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  Widget _buildStatRow(BuildContext ctx, IconData icon, String label, String value) {
+  Widget _buildStatRow(BuildContext ctx, IconData icon, String label, String value, {bool isHighlighted = false}) {
     final colorScheme = Theme.of(ctx).colorScheme;
+    final textColor = isHighlighted ? Colors.orangeAccent : colorScheme.primary;
+    
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(
           children: [
-            Icon(icon, color: colorScheme.primary, size: 32), // Bigger Icon
+            Icon(icon, color: isHighlighted ? Colors.orangeAccent : colorScheme.primary, size: 32), // Bigger Icon
             const SizedBox(width: 12),
             Text(label, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 22)), // Bigger Label
           ],
         ),
-        Text(value, style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.bold, fontSize: 26)), // Bigger Value
+        Text(value, style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 26)), // Bigger Value
       ],
     );
   }

@@ -1,5 +1,6 @@
 import 'game_screen.dart';
 import 'package:flutter/material.dart';
+import 'high_score_service.dart';
 
 // Game level data model
 class GameLevelData {
@@ -62,16 +63,39 @@ const List<GameLevelData> gameLevels = [
   ),
   GameLevelData(
     name: 'Hacker',
-    description: 'Start w/-100pts. 10s only. EVERYTHING is 200pts. 8x Speed!',
+    description: 'Start w/-100pts. 10s only. EVERYTHING is 200pts. 64x Speed!',
     imagePath: 'assets/modes/hacker.jpg',
     icon: Icons.terminal,
   ),
 ];
 
-class LevelSelectionScreen extends StatelessWidget {
+class LevelSelectionScreen extends StatefulWidget {
   final int selectedCat;
   final String username;
   const LevelSelectionScreen({super.key, required this.selectedCat, required this.username});
+
+  @override
+  State<LevelSelectionScreen> createState() => _LevelSelectionScreenState();
+}
+
+class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
+  Map<String, int> _highScores = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadScores();
+  }
+
+  Future<void> _loadScores() async {
+    final levels = gameLevels.map((l) => l.name).toList();
+    final scores = await HighScoreService.getAllHighScores(levels);
+    if (mounted) {
+      setState(() {
+        _highScores = scores;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +125,8 @@ class LevelSelectionScreen extends StatelessWidget {
                     itemCount: gameLevels.length,
                     itemBuilder: (context, index) {
                       final level = gameLevels[index];
-                      return _buildLevelCard(context, level, isMobile);
+                      final score = _highScores[level.name] ?? 0;
+                      return _buildLevelCard(context, level, isMobile, score);
                     },
                   ),
                 ),
@@ -113,15 +138,15 @@ class LevelSelectionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLevelCard(BuildContext context, GameLevelData level, bool isMobile) {
+  Widget _buildLevelCard(BuildContext context, GameLevelData level, bool isMobile, int highScore) {
     return _HoverableCard(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => GameScreen(
-              selectedCat: selectedCat,
-              username: username,
+              selectedCat: widget.selectedCat,
+              username: widget.username,
               gameLevel: level.name,
             ),
           ),
@@ -150,6 +175,41 @@ class LevelSelectionScreen extends StatelessWidget {
               ),
             ),
           ),
+          // High Score Badge (if any)
+          if (highScore > 0)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.orangeAccent,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.emoji_events, size: 14, color: Colors.white),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$highScore pts',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           // Text area
           Padding(
             padding: const EdgeInsets.all(12),

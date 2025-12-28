@@ -43,7 +43,7 @@ class HelpScreen extends StatelessWidget {
             _buildLevelInfo(context, 'Grandma', 'Targets are 30% larger. No Clocks/Combos. Reduced points.'),
             _buildLevelInfo(context, 'SpeedRun', 'Quick 10s blitz! targets appear 4x faster.'),
             _buildLevelInfo(context, 'Sayajin', 'High stakes. Start with 100pts. Good=2x, Bad=Damage.'),
-            _buildLevelInfo(context, 'Hacker', 'Insane speed. Everything is worth 200pts. 10s only.'),
+            _buildLevelInfo(context, 'Hacker', 'Insane speed (64x). Everything is worth 200pts. 10s only.'),
             const SizedBox(height: 16),
 
             _buildHeader(context, 'Character Powers'),
@@ -99,7 +99,7 @@ class HelpScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 32),
