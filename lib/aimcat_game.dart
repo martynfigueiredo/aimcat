@@ -300,7 +300,7 @@ class IconComponent extends PositionComponent {
           color: color,
           shadows: [
             Shadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               offset: const Offset(2, 2),
               blurRadius: 4,
             ),
@@ -378,9 +378,9 @@ class TappableButton extends PositionComponent with TapCallbacks {
     _buttonRect = Rect.fromLTWH(0, 0, buttonSize, buttonSize);
     _buttonRRect = RRect.fromRectAndRadius(_buttonRect!, Radius.circular(buttonSize / 2));
     _bgPaint = Paint()..color = bgColor;
-    _bgPaintPressed = Paint()..color = bgColor.withOpacity(0.7);
+    _bgPaintPressed = Paint()..color = bgColor.withValues(alpha: 0.7);
     _borderPaint = Paint()
-      ..color = iconColor.withOpacity(0.8)
+      ..color = iconColor.withValues(alpha: 0.8)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     _iconOffset = (buttonSize - buttonSize * 0.6) / 2;
@@ -462,7 +462,7 @@ class ScorePanel extends PositionComponent {
     _cachedRRect = RRect.fromRectAndRadius(rect, Radius.circular(borderRadius));
     _cachedBgPaint = Paint()..color = bgColor;
     _cachedBorderPaint = Paint()
-      ..color = Colors.white.withOpacity(0.3)
+      ..color = Colors.white.withValues(alpha: 0.3)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
   }
@@ -557,7 +557,6 @@ class AimCatGame extends FlameGame
   Future<void> onLoad() async {
     // Scaled sizes for responsive UI
     final double fontSize = 24 * scaleFactor;
-    final double smallFontSize = 16 * scaleFactor;
     final double pawSize = 56 * scaleFactor;
 
     // Pre-cache emoji text to avoid first-render delay
@@ -584,7 +583,7 @@ class AimCatGame extends FlameGame
     add(
       ScorePanel(
         position: Vector2(uiPadding - panelPadding, uiPadding - panelPadding),
-        bgColor: Colors.black.withOpacity(0.5),
+        bgColor: Colors.black.withValues(alpha: 0.5),
         panelWidth: panelWidth,
         panelHeight: panelHeight,
         borderRadius: 12 * scaleFactor,
@@ -1002,17 +1001,12 @@ class AimCatGame extends FlameGame
 
   // Pre-cached paints for particle rendering performance
   static final Paint _particlePaint = Paint()..style = PaintingStyle.fill;
-  static final Paint _bgPaint = Paint();
-  static final Paint _borderPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 2;
-  
-  // Pre-allocated vectors for calculations (reused to avoid GC)
-  static final Vector2 _tempVector = Vector2.zero();
 
   void _spawnHitParticles(Vector2 position, Color color) {
     // Pre-calculate color components for opacity interpolation
-    final colorR = color.red;
-    final colorG = color.green;
-    final colorB = color.blue;
+    final colorR = (color.r * 255.0).round().clamp(0, 255);
+    final colorG = (color.g * 255.0).round().clamp(0, 255);
+    final colorB = (color.b * 255.0).round().clamp(0, 255);
     
     add(
       ParticleSystemComponent(
@@ -1110,17 +1104,17 @@ class AimCatGame extends FlameGame
           color: textColor,
           shadows: [
             Shadow(
-              color: Colors.black.withOpacity(0.7),
+              color: Colors.black.withValues(alpha: 0.7),
               offset: const Offset(2, 2),
               blurRadius: 4,
             ),
             Shadow(
-              color: textColor.withOpacity(0.8),
+              color: textColor.withValues(alpha: 0.8),
               offset: Offset.zero,
               blurRadius: 10,
             ),
             Shadow(
-              color: Colors.white.withOpacity(0.5),
+              color: Colors.white.withValues(alpha: 0.5),
               offset: const Offset(-1, -1),
               blurRadius: 2,
             ),
@@ -1193,14 +1187,14 @@ class AimCatGame extends FlameGame
                   final size = 5 * (1 - particle.progress * 0.5);
                   // Draw star shape
                   final paint = Paint()
-                    ..color = color.withOpacity(opacity)
+                    ..color = color.withValues(alpha: opacity)
                     ..style = PaintingStyle.fill;
                   canvas.drawCircle(Offset.zero, size, paint);
                   // Inner glow
                   canvas.drawCircle(
                     Offset.zero,
                     size * 0.5,
-                    Paint()..color = Colors.white.withOpacity(opacity * 0.8),
+                    Paint()..color = Colors.white.withValues(alpha: opacity * 0.8),
                   );
                 },
               ),
@@ -1223,7 +1217,7 @@ class AimCatGame extends FlameGame
           color: color,
           shadows: [
             Shadow(
-              color: Colors.black.withOpacity(0.7),
+              color: Colors.black.withValues(alpha: 0.7),
               offset: const Offset(2, 2),
               blurRadius: 4,
             ),
@@ -1270,12 +1264,12 @@ class AimCatGame extends FlameGame
           color: const Color(0xFFFF5252),
           shadows: [
             Shadow(
-              color: Colors.black.withOpacity(0.8),
+              color: Colors.black.withValues(alpha: 0.8),
               offset: const Offset(3, 3),
               blurRadius: 6,
             ),
             Shadow(
-              color: const Color(0xFFFF5252).withOpacity(0.6),
+              color: const Color(0xFFFF5252).withValues(alpha: 0.6),
               offset: Offset.zero,
               blurRadius: 15,
             ),
@@ -1434,7 +1428,6 @@ class AimCatGame extends FlameGame
     paw.position = info.eventPosition.global;
   }
 
-  @override
   void onMouseHover(PointerHoverInfo info) {
     paw.position = info.eventPosition.global;
   }

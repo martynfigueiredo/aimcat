@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flame/game.dart';
-import 'package:flame/components.dart';
 import 'package:share_plus/share_plus.dart';
 import 'aimcat_game.dart';
 import 'start_screen.dart';
@@ -27,7 +26,6 @@ class _GameScreenState extends State<GameScreen> {
   // Global paw cursor
   OverlayEntry? _pawOverlay;
   Offset _pawPosition = const Offset(0, 0);
-  final bool _isPawPressed = false; // Track paw press state
   final GlobalKey<_AnimatedPawState> _pawKey = GlobalKey<_AnimatedPawState>();
 
   void _updatePawPosition(Offset position) {
@@ -261,12 +259,12 @@ class _GameScreenState extends State<GameScreen> {
             color: color,
             shape: BoxShape.circle,
             border: Border.all(
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withValues(alpha: 0.8),
               width: 3,
             ),
             boxShadow: [
               BoxShadow(
-                color: color.withOpacity(0.4),
+                color: color.withValues(alpha: 0.4),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -321,8 +319,8 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   String _getBackgroundPath() {
-    // Get profile name and normalize it (remove spaces, lowercase)
-    final profileName = profiles[widget.selectedCat].name
+    // Get character name and normalize it (remove spaces, lowercase)
+    final characterName = characters[widget.selectedCat].name
         .replaceAll(' ', '')
         .toLowerCase();
     
@@ -331,7 +329,7 @@ class _GameScreenState extends State<GameScreen> {
         .replaceAll(' ', '')
         .toLowerCase();
     
-    return 'assets/background/bg-$profileName-$gameMode.png';
+    return 'assets/background/bg-$characterName-$gameMode.png';
   }
 
   @override
@@ -436,7 +434,7 @@ class _GameScreenState extends State<GameScreen> {
                     ),
                     boxShadow: isMobile ? null : [
                       BoxShadow(
-                        color: colorScheme.primary.withOpacity(0.3),
+                        color: colorScheme.primary.withValues(alpha: 0.3),
                         blurRadius: 20,
                         spreadRadius: 2,
                       ),
@@ -597,7 +595,7 @@ class _AnimatedPawState extends State<_AnimatedPaw> with SingleTickerProviderSta
                 shadows: [
                   // Drop shadow for depth
                   Shadow(
-                    color: Colors.black.withOpacity(0.4),
+                    color: Colors.black.withValues(alpha: 0.4),
                     offset: const Offset(2, 2),
                     blurRadius: 4,
                   ),

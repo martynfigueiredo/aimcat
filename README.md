@@ -24,7 +24,7 @@ AimCat is an exciting aim training game with a playful cat theme. Move a cat paw
 
 ## 🏆 Features
 
-- 50 unique cat profile pictures
+- 50 unique cat character pictures
 - Custom 4-character usernames (uppercase + numbers)
 - Dynamic target spawning system
 - Comprehensive ranking system per game mode

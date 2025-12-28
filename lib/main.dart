@@ -400,7 +400,7 @@ class _GlobalAnimatedPawState extends State<_GlobalAnimatedPaw>
                 color: const Color(0xFFFFC107),
                 shadows: [
                   Shadow(
-                    color: Colors.black.withOpacity(0.4),
+                    color: Colors.black.withValues(alpha: 0.4),
                     offset: const Offset(2, 2),
                     blurRadius: 4,
                   ),
@@ -491,7 +491,7 @@ class HomeScreen extends StatelessWidget {
                         color: Theme.of(context).colorScheme.primary,
                         shadows: [
                           Shadow(
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
                             blurRadius: 12,
                             offset: const Offset(0, 3),
                           ),

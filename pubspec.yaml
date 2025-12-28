@@ -68,9 +68,6 @@ flutter:
     - assets/images/
     - assets/profiles/
     - assets/modes/
-    - assets/cats/
-    - assets/targets/
-    - assets/sounds/
     - assets/background/
   # assets:
   #   - images/a_dot_burr.jpeg

@@ -13,39 +13,39 @@ class UpperCaseTextFormatter extends TextInputFormatter {
   }
 }
 
-// Profile data model
-class ProfileData {
+// Character data model
+class CharacterData {
   final String name;
   final String imagePath;
 
-  const ProfileData({required this.name, required this.imagePath});
+  const CharacterData({required this.name, required this.imagePath});
 }
 
-// Available profiles
-const List<ProfileData> profiles = [
-  ProfileData(name: 'Bidoque', imagePath: 'assets/profiles/Bidoque.png'),
-  ProfileData(name: 'Capybara', imagePath: 'assets/profiles/Capybara.png'),
-  ProfileData(name: 'Cat', imagePath: 'assets/profiles/Cat.png'),
-  ProfileData(name: 'Devil Cat', imagePath: 'assets/profiles/DevilCat.png'),
-  ProfileData(name: 'Diplomat', imagePath: 'assets/profiles/Diplomat.png'),
-  ProfileData(
+// Available characters
+const List<CharacterData> characters = [
+  CharacterData(name: 'Bidoque', imagePath: 'assets/profiles/Bidoque.png'),
+  CharacterData(name: 'Capybara', imagePath: 'assets/profiles/Capybara.png'),
+  CharacterData(name: 'Cat', imagePath: 'assets/profiles/Cat.png'),
+  CharacterData(name: 'Devil Cat', imagePath: 'assets/profiles/DevilCat.png'),
+  CharacterData(name: 'Diplomat', imagePath: 'assets/profiles/Diplomat.png'),
+  CharacterData(
     name: 'Flying Horse',
     imagePath: 'assets/profiles/FlyingHorse.png',
   ),
-  ProfileData(name: 'Ghost', imagePath: 'assets/profiles/Ghost.png'),
-  ProfileData(name: 'Golden Girl', imagePath: 'assets/profiles/GoldenGirl.png'),
-  ProfileData(name: 'Grandma', imagePath: 'assets/profiles/Grandma.png'),
-  ProfileData(name: 'Koi', imagePath: 'assets/profiles/Koi.png'),
-  ProfileData(name: 'Librarian', imagePath: 'assets/profiles/Librarian.png'),
-  ProfileData(name: 'Mom', imagePath: 'assets/profiles/Mom.png'),
-  ProfileData(name: 'Moustache', imagePath: 'assets/profiles/Moustache.png'),
-  ProfileData(name: 'Nerdy', imagePath: 'assets/profiles/Nerdy.png'),
-  ProfileData(name: 'Nerdy Girl', imagePath: 'assets/profiles/NerdyGirl.png'),
-  ProfileData(name: 'Nuken Duke', imagePath: 'assets/profiles/NukenDuke.png'),
-  ProfileData(name: 'Nurse', imagePath: 'assets/profiles/Nurse.png'),
-  ProfileData(name: 'Punk', imagePath: 'assets/profiles/Punk.png'),
-  ProfileData(name: 'Roadrunner', imagePath: 'assets/profiles/Roadrunner.png'),
-  ProfileData(name: 'Robson', imagePath: 'assets/profiles/Robson.png'),
+  CharacterData(name: 'Ghost', imagePath: 'assets/profiles/Ghost.png'),
+  CharacterData(name: 'Golden Girl', imagePath: 'assets/profiles/GoldenGirl.png'),
+  CharacterData(name: 'Grandma', imagePath: 'assets/profiles/Grandma.png'),
+  CharacterData(name: 'Koi', imagePath: 'assets/profiles/Koi.png'),
+  CharacterData(name: 'Librarian', imagePath: 'assets/profiles/Librarian.png'),
+  CharacterData(name: 'Mom', imagePath: 'assets/profiles/Mom.png'),
+  CharacterData(name: 'Moustache', imagePath: 'assets/profiles/Moustache.png'),
+  CharacterData(name: 'Nerdy', imagePath: 'assets/profiles/Nerdy.png'),
+  CharacterData(name: 'Nerdy Girl', imagePath: 'assets/profiles/NerdyGirl.png'),
+  CharacterData(name: 'Nuken Duke', imagePath: 'assets/profiles/NukenDuke.png'),
+  CharacterData(name: 'Nurse', imagePath: 'assets/profiles/Nurse.png'),
+  CharacterData(name: 'Punk', imagePath: 'assets/profiles/Punk.png'),
+  CharacterData(name: 'Roadrunner', imagePath: 'assets/profiles/Roadrunner.png'),
+  CharacterData(name: 'Robson', imagePath: 'assets/profiles/Robson.png'),
 ];
 
 class StartScreen extends StatefulWidget {
@@ -56,14 +56,14 @@ class StartScreen extends StatefulWidget {
 }
 
 class _StartScreenState extends State<StartScreen> {
-  int _currentStep = 0; // 0 = profile selection, 1 = username entry
-  int selectedProfile = 0;
+  int _currentStep = 0; // 0 = character selection, 1 = username entry
+  int selectedCharacter = 0;
   final TextEditingController _controller = TextEditingController();
   String? errorText;
 
-  void _onProfileSelected(int index) {
+  void _onCharacterSelected(int index) {
     setState(() {
-      selectedProfile = index;
+      selectedCharacter = index;
     });
   }
 
@@ -73,7 +73,7 @@ class _StartScreenState extends State<StartScreen> {
     });
   }
 
-  void _goBackToProfileStep() {
+  void _goBackToCharacterStep() {
     setState(() {
       _currentStep = 0;
     });
@@ -91,7 +91,7 @@ class _StartScreenState extends State<StartScreen> {
       context,
       MaterialPageRoute(
         builder: (context) =>
-            GameModeScreen(selectedCat: selectedProfile, username: username),
+            GameModeScreen(selectedCat: selectedCharacter, username: username),
       ),
     );
   }
@@ -100,29 +100,28 @@ class _StartScreenState extends State<StartScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_currentStep == 0 ? 'Choose Profile' : 'Enter Name'),
+        title: Text(_currentStep == 0 ? 'Choose Character' : 'Enter Name'),
         leading: _currentStep == 1
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
-                onPressed: _goBackToProfileStep,
+                onPressed: _goBackToCharacterStep,
               )
             : null,
       ),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
         child: _currentStep == 0
-            ? _buildProfileSelectionStep()
+            ? _buildCharacterSelectionStep()
             : _buildUsernameStep(),
       ),
     );
   }
 
-  Widget _buildProfileSelectionStep() {
+  Widget _buildCharacterSelectionStep() {
     return LayoutBuilder(
       builder: (context, constraints) {
         // Calculate optimal grid layout based on screen size
         final screenWidth = constraints.maxWidth;
-        final screenHeight = constraints.maxHeight;
         final isMobile = screenWidth < 600;
         final maxWidth = isMobile ? screenWidth : 600.0;
         final crossAxisCount = isMobile ? 3 : 4;
@@ -130,14 +129,14 @@ class _StartScreenState extends State<StartScreen> {
 
         return SafeArea(
           child: Column(
-            key: const ValueKey('profile_step'),
+            key: const ValueKey('character_step'),
             children: [
               SizedBox(height: isMobile ? 16 : 24),
               // Title
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  'Select your profile',
+                  'Select your character',
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
@@ -172,15 +171,15 @@ class _StartScreenState extends State<StartScreen> {
                           crossAxisSpacing: spacing,
                           childAspectRatio: isMobile ? 0.85 : 0.8,
                         ),
-                        itemCount: profiles.length,
+                        itemCount: characters.length,
                         itemBuilder: (context, index) {
-                          final profile = profiles[index];
-                          final isSelected = selectedProfile == index;
-                          return _ProfileCard(
-                            profile: profile,
+                          final character = characters[index];
+                          final isSelected = selectedCharacter == index;
+                          return _CharacterCard(
+                            character: character,
                             isSelected: isSelected,
                             onTap: () {
-                              _onProfileSelected(index);
+                              _onCharacterSelected(index);
                               _goToUsernameStep();
                             },
                           );
@@ -198,12 +197,12 @@ class _StartScreenState extends State<StartScreen> {
   }
 
   Widget _buildUsernameStep() {
-    final profile = profiles[selectedProfile];
+    final character = characters[selectedCharacter];
     return LayoutBuilder(
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 600;
         final maxWidth = isMobile ? double.infinity : 400.0;
-        final profileSize = isMobile ? 120.0 : 140.0;
+        final characterSize = isMobile ? 120.0 : 140.0;
 
         return SafeArea(
           child: Center(
@@ -216,7 +215,7 @@ class _StartScreenState extends State<StartScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const SizedBox(height: 16),
-                    // Selected profile display
+                    // Selected character display
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
@@ -228,8 +227,8 @@ class _StartScreenState extends State<StartScreen> {
                       child: Column(
                         children: [
                           Container(
-                            width: profileSize,
-                            height: profileSize,
+                            width: characterSize,
+                            height: characterSize,
                             decoration: BoxDecoration(
                               color: Theme.of(
                                 context,
@@ -243,20 +242,20 @@ class _StartScreenState extends State<StartScreen> {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(9),
                               child: Image.asset(
-                                profile.imagePath,
+                                character.imagePath,
                                 fit: BoxFit.cover,
                               ),
                             ),
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            profile.name,
+                            character.name,
                             style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.w600),
                           ),
                           TextButton(
-                            onPressed: _goBackToProfileStep,
-                            child: const Text('Change profile'),
+                            onPressed: _goBackToCharacterStep,
+                            child: const Text('Change character'),
                           ),
                         ],
                       ),
@@ -315,23 +314,23 @@ class _StartScreenState extends State<StartScreen> {
   }
 }
 
-// Profile card widget with hover effect
-class _ProfileCard extends StatefulWidget {
-  final ProfileData profile;
+// Character card widget with hover effect
+class _CharacterCard extends StatefulWidget {
+  final CharacterData character;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _ProfileCard({
-    required this.profile,
+  const _CharacterCard({
+    required this.character,
     required this.isSelected,
     required this.onTap,
   });
 
   @override
-  State<_ProfileCard> createState() => _ProfileCardState();
+  State<_CharacterCard> createState() => _CharacterCardState();
 }
 
-class _ProfileCardState extends State<_ProfileCard> {
+class _CharacterCardState extends State<_CharacterCard> {
   bool _isHovered = false;
 
   @override
@@ -351,7 +350,7 @@ class _ProfileCardState extends State<_ProfileCard> {
               color: widget.isSelected
                   ? primaryColor
                   : _isHovered
-                  ? primaryColor.withOpacity(0.6)
+                  ? primaryColor.withValues(alpha: 0.6)
                   : Colors.transparent,
               width: 3,
             ),
@@ -371,7 +370,7 @@ class _ProfileCardState extends State<_ProfileCard> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: Image.asset(
-                      widget.profile.imagePath,
+                      widget.character.imagePath,
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -380,7 +379,7 @@ class _ProfileCardState extends State<_ProfileCard> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 8, left: 4, right: 4),
                 child: Text(
-                  widget.profile.name,
+                  widget.character.name,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     fontWeight: widget.isSelected || _isHovered
                         ? FontWeight.w600
