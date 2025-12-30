@@ -1,10 +1,10 @@
 # 🐱 AimCat
 
-AimCat is a simple, kid-friendly aim trainer built with Flutter and the Flame engine. Designed for both fun and skill-building, it allows players to test their accuracy by tapping good targets while avoiding distractions.
+AimCat is a simple, kid-friendly aim trainer built with Flutter and the Flame engine. Designed for both fun and skill-building, the goal is to **simply tap** like a cat paw to hit "good" targets while avoiding distractions.
 
 ## 🎮 About
 
-AimCat focuses on a playful for everyone, but specially kids. The goal is simple: control a cat paw to hit "good" targets (like hearts and stars) to score maximum points. This project was created as a loving homage to my children—the original "AimCats"—and serves as a primary showcase for my development portfolio.
+AimCat focuses on a playful for everyone, but specially kids. The goal is simple: **simply tap** good targets (like hearts and stars) to score maximum points. This project was created as a loving homage to my children—the original "AimCats"—and serves as a primary showcase for my development portfolio.
 
 ## 🚀 Platforms
 
@@ -16,25 +16,29 @@ AimCat focuses on a playful for everyone, but specially kids. The goal is simple
 
 ## 🎯 Game Modes
 
-- **Baby**: 2 minutes, scores don't matter - just for fun!
-- **Toddler**: 2 minutes with scoring
-- **SpeedRun**: 1 minute intense gameplay
-- **Marathon**: 5 minutes endurance test
-- **Ultra Marathon**: 2 hours ultimate challenge
+- **Baby (30s)**: The gentlest mode. Only positive targets appear, they stay on screen longer, and every hit gives a massive bonus! No penalties, no clocks—just pure tapping joy.
+- **Toddler (30s)**: A step up. Bad items appear but carry no penalty. Good items are worth double points. No clocks or complex combos.
+- **Grandma (30s)**: Targets are 30% larger for better visibility. No clocks or combos. Reduced scoring for a relaxed pace.
+- **SpeedRun (10s)**: A quick blitz where targets appear 4x faster. Precision and speed are key!
+- **Hacker (10s)**: The ultimate challenge. Targets appear 8x faster and disappear almost instantly (64x speed). Everything is worth 200 points, but you start with a -100 point penalty!
+- **Marathon (90s)**: A standard test of endurance and focus.
+- **Ultra Marathon (5 min)**: The ultimate test of stamina.
+- **Sayajin (30s)**: High-stakes mode. Start with 100 points. Good hits are worth double, but bad hits hurt more.
 
 ## 🏆 Features
 
 - 50 unique cat character pictures
 - Custom 4-character usernames (uppercase + numbers)
 - Dynamic target spawning system
-- Comprehensive ranking system per game mode
-- Immersive sound effects and background music
-- Responsive controls (touch & mouse)
+- Progressive combo system (+10 bonus every 5 hits)
+- Immersive sound effects and background movement
+- Responsive "Tap Only" mobile controls
 
 ## 🛠️ Built With
 
 - [Flutter](https://flutter.dev/) - UI Framework
 - [Flame](https://flame-engine.org/) - Game Engine
+- [Material Design](https://material.io/) - Design System
 - Dart
 
 ## 📦 Getting Started
@@ -62,18 +66,6 @@ flutter run -d chrome          # Web
 flutter run -d windows         # Windows
 flutter run -d <device-id>     # Android/iOS
 ```
-
-## 🎨 Assets
-
-Game assets including cat images, target sprites, and audio files are located in the `assets/` directory.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🤝 Contributing
-
-Contributions, issues, and feature requests are welcome!
 
 ## 👨‍💻 Author
 
