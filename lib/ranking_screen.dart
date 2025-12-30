@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'high_score_service.dart';
 import 'level_selection_screen.dart'; // To get gameLevels list
+import 'animation_utils.dart';
 
 class RankingScreen extends StatefulWidget {
   const RankingScreen({super.key});
@@ -37,11 +38,13 @@ class _RankingScreenState extends State<RankingScreen> {
         title: const Text('Local Hall of Fame'),
         centerTitle: true,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _highScores.values.every((score) => score == 0)
-              ? _buildEmptyState()
-              : _buildScoresList(),
+      body: SparkleBackground(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _highScores.values.every((score) => score == 0)
+                ? _buildEmptyState()
+                : _buildScoresList(),
+      ),
     );
   }
 
@@ -80,25 +83,28 @@ class _RankingScreenState extends State<RankingScreen> {
         
         if (score == 0) return const SizedBox.shrink();
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            leading: CircleAvatar(
-              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-              child: Icon(level.icon, color: Theme.of(context).colorScheme.primary),
-            ),
-            title: Text(
-              level.name,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            trailing: Text(
-              '$score pts',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.w900,
-                fontSize: 20,
+        return StaggeredEntry(
+          index: index,
+          child: Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              leading: CircleAvatar(
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                child: Icon(level.icon, color: Theme.of(context).colorScheme.primary),
+              ),
+              title: Text(
+                level.name,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              trailing: Text(
+                '$score pts',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 20,
+                ),
               ),
             ),
           ),

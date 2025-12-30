@@ -1,6 +1,8 @@
 import 'game_screen.dart';
 import 'package:flutter/material.dart';
 import 'high_score_service.dart';
+import 'animation_utils.dart';
+import 'start_screen.dart'; // For characters list
 
 // Game level data model
 class GameLevelData {
@@ -101,50 +103,122 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Select Level')),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final screenWidth = constraints.maxWidth;
-            final isMobile = screenWidth < 600;
-            final crossAxisCount = isMobile ? 2 : 4;
-            final maxWidth = isMobile ? screenWidth : 900.0;
-            final aspectRatio = isMobile ? 0.75 : 0.7;
+      body: SparkleBackground(
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final screenWidth = constraints.maxWidth;
+              final isMobile = screenWidth < 600;
+              final crossAxisCount = isMobile ? 2 : 4;
+              final maxWidth = isMobile ? screenWidth : 900.0;
+              final aspectRatio = isMobile ? 0.75 : 0.7;
 
-            return Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxWidth),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: aspectRatio,
+              return Column(
+                children: [
+                  // Selected character header
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.8),
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    itemCount: gameLevels.length,
-                    itemBuilder: (context, index) {
-                      final level = gameLevels[index];
-                      final score = _highScores[level.name] ?? 0;
-                      return _buildLevelCard(context, level, isMobile, score);
-                    },
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surfaceContainerLow,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.primary,
+                              width: 2,
+                            ),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Hero(
+                              tag: 'character_portrait_${characters[widget.selectedCat].name}',
+                              child: Image.asset(
+                                characters[widget.selectedCat].imagePath,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              characters[widget.selectedCat].name,
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Player: ${widget.username}',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Spacer(),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Change'),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ),
-            );
-          },
+                  // Level grid
+                  Expanded(
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: maxWidth),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          child: GridView.builder(
+                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: crossAxisCount,
+                              mainAxisSpacing: 16,
+                              crossAxisSpacing: 16,
+                              childAspectRatio: aspectRatio,
+                            ),
+                            itemCount: gameLevels.length,
+                            itemBuilder: (context, index) {
+                              final level = gameLevels[index];
+                              final score = _highScores[level.name] ?? 0;
+                              return StaggeredEntry(
+                                index: index,
+                                child: _buildLevelCard(context, level, isMobile, score),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
   }
 
   Widget _buildLevelCard(BuildContext context, GameLevelData level, bool isMobile, int highScore) {
+    final character = characters[widget.selectedCat];
+    
     return _HoverableCard(
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => GameScreen(
+          AimCatPageRoute(
+            page: GameScreen(
               selectedCat: widget.selectedCat,
               username: widget.username,
               gameLevel: level.name,
@@ -155,61 +229,67 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Image area
+          // Image area and High Score Badge
           Expanded(
             flex: 4,
-            child: Container(
-              color: Theme.of(context).colorScheme.surfaceContainerLow,
-              child: Image.asset(
-                level.imagePath,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Center(
-                    child: Icon(
-                      level.icon,
-                      size: isMobile ? 56 : 72,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-          // High Score Badge (if any)
-          if (highScore > 0)
-            Positioned(
-              top: 8,
-              right: 8,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.orangeAccent,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+            child: Stack(
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  color: Theme.of(context).colorScheme.surfaceContainerLow,
+                  child: Image.asset(
+                    level.imagePath,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Center(
+                        child: Icon(
+                          level.icon,
+                          size: isMobile ? 56 : 72,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      );
+                    },
+                  ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.emoji_events, size: 14, color: Colors.white),
-                    const SizedBox(width: 4),
-                    Text(
-                      '$highScore pts',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                // High Score Badge (if any)
+                if (highScore > 0)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.orangeAccent,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.3),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.emoji_events, size: 14, color: Colors.white),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$highScore pts',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
+                  ),
+              ],
             ),
+          ),
           // Text area
           Padding(
             padding: const EdgeInsets.all(12),
@@ -262,19 +342,47 @@ class _HoverableCard extends StatefulWidget {
   State<_HoverableCard> createState() => _HoverableCardState();
 }
 
-class _HoverableCardState extends State<_HoverableCard> {
+class _HoverableCardState extends State<_HoverableCard> with SingleTickerProviderStateMixin {
   bool _isHovered = false;
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).colorScheme.primary;
     
     return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
+      onEnter: (_) {
+        setState(() => _isHovered = true);
+        _controller.forward();
+      },
+      onExit: (_) {
+        setState(() => _isHovered = false);
+        _controller.reverse();
+      },
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
+        child: ScaleTransition(
+          scale: _scaleAnimation,
+          child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
@@ -285,7 +393,8 @@ class _HoverableCardState extends State<_HoverableCard> {
             color: Theme.of(context).colorScheme.surfaceContainerHighest,
           ),
           clipBehavior: Clip.antiAlias,
-          child: widget.child,
+            child: widget.child,
+          ),
         ),
       ),
     );

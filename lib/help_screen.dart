@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'animation_utils.dart';
 
 class HelpScreen extends StatelessWidget {
   const HelpScreen({super.key});
@@ -7,57 +8,33 @@ class HelpScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Game Guide & Instructions')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(context, 'Objective'),
-            _buildText(
-              'AimCat is a fast-paced aim trainer game. Your goal is to hit as many positive targets as possible while avoiding negative ones within the time limit.',
-            ),
-            const SizedBox(height: 16),
-            
-            _buildHeader(context, 'How to Play'),
-            _buildListItem(context, Icons.touch_app, 'Tap or click on targets to hit them.'),
-            _buildListItem(context, Icons.mouse, 'Your cat paw cursor follows your touch/mouse.'),
-            _buildListItem(context, Icons.timer, 'Keep an eye on the countdown at the top.'),
-            const SizedBox(height: 16),
-
-            _buildHeader(context, 'Targets'),
-            _buildTargetRow(context, Icons.eco, Colors.green, 'Positive Targets', 'Give points and help build combos. Some even give extra time!'),
-            _buildTargetRow(context, Icons.pest_control, Colors.red, 'Negative Targets', 'Deduct points, break your combo, and may penalize your time.'),
-            const SizedBox(height: 16),
-
-            _buildHeader(context, 'Combo System'),
-            _buildText(
-              'Hit consecutive positive targets to build a combo! \n'
-              '• Every 5 hits adds a progressive bonus (+10, +20, +30...).\n'
-              '• Hitting a negative target or letting a positive one expire resets your combo.',
-            ),
-            const SizedBox(height: 16),
-
-            _buildHeader(context, 'Level Rules'),
-            _buildLevelInfo(context, 'Baby', 'Easy Mode. Good targets only, they stay 8x longer. No Clocks/Combos.'),
-            _buildLevelInfo(context, 'Toddler', '2x Points for good items. Bad items worth 0. No Clocks/Combos.'),
-            _buildLevelInfo(context, 'Grandma', 'Targets are 30% larger. No Clocks/Combos. Reduced points.'),
-            _buildLevelInfo(context, 'SpeedRun', 'Quick 10s blitz! targets appear 4x faster.'),
-            _buildLevelInfo(context, 'Sayajin', 'High stakes. Start with 100pts. Good=2x, Bad=Damage.'),
-            _buildLevelInfo(context, 'Hacker', 'Insane speed (64x). Everything is worth 200pts. 10s only.'),
-            const SizedBox(height: 16),
-
-            _buildHeader(context, 'Character Powers'),
-            _buildText(
-              'Every character has a special ability! Some start with more time, others get massive multipliers for specific items or even convert bad items into points.',
-            ),
-            const SizedBox(height: 32),
-          ],
+      body: const SparkleBackground(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              StaggeredEntry(index: 0, child: _ObjectiveSection()),
+              StaggeredEntry(index: 1, child: _HowToPlaySection()),
+              StaggeredEntry(index: 2, child: _TargetsSection()),
+              StaggeredEntry(index: 3, child: _ComboSystemSection()),
+              StaggeredEntry(index: 4, child: _LevelRulesSection()),
+              StaggeredEntry(index: 5, child: _CharacterPowersSection()),
+              SizedBox(height: 32),
+            ],
+          ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildHeader(BuildContext context, String title) {
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  const _SectionHeader(this.title);
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Text(
@@ -69,15 +46,28 @@ class HelpScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildText(String text) {
+class _SectionText extends StatelessWidget {
+  final String text;
+  const _SectionText(this.text);
+
+  @override
+  Widget build(BuildContext context) {
     return Text(
       text,
       style: const TextStyle(fontSize: 16, height: 1.5),
     );
   }
+}
 
-  Widget _buildListItem(BuildContext context, IconData icon, String text) {
+class _ListItem extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _ListItem(this.icon, this.text);
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
@@ -85,13 +75,22 @@ class HelpScreen extends StatelessWidget {
         children: [
           Icon(icon, size: 20, color: Theme.of(context).colorScheme.secondary),
           const SizedBox(width: 8),
-          Expanded(child: _buildText(text)),
+          Expanded(child: _SectionText(text)),
         ],
       ),
     );
   }
+}
 
-  Widget _buildTargetRow(BuildContext context, IconData icon, Color color, String title, String desc) {
+class _TargetRow extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String desc;
+  const _TargetRow(this.icon, this.color, this.title, this.desc);
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -118,8 +117,15 @@ class HelpScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildLevelInfo(BuildContext context, String name, String rules) {
+class _LevelInfo extends StatelessWidget {
+  final String name;
+  final String rules;
+  const _LevelInfo(this.name, this.rules);
+
+  @override
+  Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4.0),
       child: ListTile(
@@ -127,6 +133,107 @@ class HelpScreen extends StatelessWidget {
         subtitle: Text(rules),
         dense: true,
       ),
+    );
+  }
+}
+
+class _ObjectiveSection extends StatelessWidget {
+  const _ObjectiveSection();
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader('Objective'),
+        _SectionText('AimCat is a fast-paced aim trainer game. Your goal is to hit as many positive targets as possible while avoiding negative ones within the time limit.'),
+        SizedBox(height: 16),
+      ],
+    );
+  }
+}
+
+class _HowToPlaySection extends StatelessWidget {
+  const _HowToPlaySection();
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader('How to Play'),
+        _ListItem(Icons.touch_app, 'Tap or click on targets to hit them.'),
+        _ListItem(Icons.mouse, 'Your cat paw cursor follows your touch/mouse.'),
+        _ListItem(Icons.timer, 'Keep an eye on the countdown at the top.'),
+        SizedBox(height: 16),
+      ],
+    );
+  }
+}
+
+class _TargetsSection extends StatelessWidget {
+  const _TargetsSection();
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader('Targets'),
+        _TargetRow(Icons.eco, Colors.green, 'Positive Targets', 'Give points and help build combos. Some even give extra time!'),
+        _TargetRow(Icons.pest_control, Colors.red, 'Negative Targets', 'Deduct points, break your combo, and may penalize your time.'),
+        SizedBox(height: 16),
+      ],
+    );
+  }
+}
+
+class _ComboSystemSection extends StatelessWidget {
+  const _ComboSystemSection();
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader('Combo System'),
+        _SectionText(
+          'Hit consecutive positive targets to build a combo! \n'
+          '• Every 5 hits adds a progressive bonus (+10, +20, +30...).\n'
+          '• Hitting a negative target or letting a positive one expire resets your combo.',
+        ),
+        SizedBox(height: 16),
+      ],
+    );
+  }
+}
+
+class _LevelRulesSection extends StatelessWidget {
+  const _LevelRulesSection();
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader('Level Rules'),
+        _LevelInfo('Baby', 'Easy Mode. Good targets only, they stay 8x longer. No Clocks/Combos.'),
+        _LevelInfo('Toddler', '2x Points for good items. Bad items worth 0. No Clocks/Combos.'),
+        _LevelInfo('Grandma', 'Targets are 30% larger. No Clocks/Combos. Reduced points.'),
+        _LevelInfo('SpeedRun', 'Quick 10s blitz! targets appear 4x faster.'),
+        _LevelInfo('Sayajin', 'High stakes. Start with 100pts. Good=2x, Bad=Damage.'),
+        _LevelInfo('Hacker', 'Insane speed (64x). Everything is worth 200pts. 10s only.'),
+        SizedBox(height: 16),
+      ],
+    );
+  }
+}
+
+class _CharacterPowersSection extends StatelessWidget {
+  const _CharacterPowersSection();
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader('Character Powers'),
+        _SectionText('Every character has a special ability! Some start with more time, others get massive multipliers for specific items or even convert bad items into points.'),
+      ],
     );
   }
 }

@@ -477,6 +477,7 @@ class AimCatGame extends FlameGame
   late TappableButton finishButton;
   late TappableButton restartButton;
   bool stopped = false;
+  bool _isTimerPulsing = false;
 
   // Make the game background transparent so the background image shows through
   @override
@@ -869,6 +870,14 @@ class AimCatGame extends FlameGame
     comboText.text = '';
     lastHitText.text = '';
     
+    // Reset timer pulsing state and effects
+    _isTimerPulsing = false;
+    timerText.removeAll(timerText.children.whereType<ScaleEffect>());
+    timerText.scale = Vector2.all(1.0);
+    timerText.textRenderer = TextPaint(
+      style: (timerText.textRenderer as TextPaint).style.copyWith(color: Colors.white),
+    );
+    
     for (final t in List<Target>.from(targets)) {
       t.removeFromParent();
     }
@@ -1024,6 +1033,14 @@ class AimCatGame extends FlameGame
         } else {
           comboText.text = combo > 1 ? 'x$combo' : '';
         }
+
+        // Add pop effect to combo text
+        comboText.add(
+          ScaleEffect.to(
+            Vector2.all(1.1),
+            EffectController(duration: 0.05, reverseDuration: 0.05),
+          ),
+        );
       }
     } else {
       // Negative target breaks the combo (only if enabled)
@@ -1038,6 +1055,14 @@ class AimCatGame extends FlameGame
 
     score += totalValue;
     scoreText.text = 'Score: $score';
+    
+    // Add pop effect to score text
+    scoreText.add(
+      ScaleEffect.to(
+        Vector2.all(1.15),
+        EffectController(duration: 0.05, reverseDuration: 0.05),
+      ),
+    );
 
     // Update last hit text
     final valueText = target.config.value >= 0
@@ -1484,6 +1509,28 @@ class AimCatGame extends FlameGame
         _secondsAccumulator = 0; // Reset accumulator
         timerText.text = 'Time: ${timeLeft.ceil()}';
         onGameUpdate(score, timeLeft, false);
+
+        // Low time warning: Pulse red and scale up when < 10 seconds
+        if (timeLeft < 10 && !_isTimerPulsing && !stopped) {
+          _isTimerPulsing = true;
+          // Change color manually since ColorEffect is incompatible with TextComponent
+          timerText.textRenderer = TextPaint(
+            style: (timerText.textRenderer as TextPaint).style.copyWith(
+              color: const Color(0xFFFF5252), // Red accent
+            ),
+          );
+          
+          timerText.add(
+            ScaleEffect.to(
+              Vector2.all(1.1),
+              EffectController(
+                duration: 0.4,
+                reverseDuration: 0.4,
+                infinite: true,
+              ),
+            ),
+          );
+        }
       }
 
       // Check for Game Over

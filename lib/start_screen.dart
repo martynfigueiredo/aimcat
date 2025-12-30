@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 
 import 'level_selection_screen.dart';
 import 'package:flutter/material.dart';
+import 'animation_utils.dart';
 
 // Formatter to force uppercase
 class UpperCaseTextFormatter extends TextInputFormatter {
@@ -243,9 +244,8 @@ class _StartScreenState extends State<StartScreen> {
     setState(() => errorText = null);
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) =>
-            LevelSelectionScreen(selectedCat: selectedCharacter, username: username),
+      AimCatPageRoute(
+        page: LevelSelectionScreen(selectedCat: selectedCharacter, username: username),
       ),
     );
   }
@@ -262,11 +262,13 @@ class _StartScreenState extends State<StartScreen> {
               )
             : null,
       ),
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        child: _currentStep == 0
-            ? _buildCharacterSelectionStep()
-            : _buildUsernameStep(),
+      body: SparkleBackground(
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: _currentStep == 0
+              ? _buildCharacterSelectionStep()
+              : _buildUsernameStep(),
+        ),
       ),
     );
   }
@@ -337,13 +339,16 @@ class _StartScreenState extends State<StartScreen> {
                         itemBuilder: (context, index) {
                           final character = characters[index];
                           final isSelected = selectedCharacter == index;
-                          return _CharacterCard(
-                            character: character,
-                            isSelected: isSelected,
-                            onTap: () {
-                              _onCharacterSelected(index);
-                              _goToUsernameStep();
-                            },
+                          return StaggeredEntry(
+                            index: index,
+                            child: _CharacterCard(
+                              character: character,
+                              isSelected: isSelected,
+                              onTap: () {
+                                _onCharacterSelected(index);
+                                _goToUsernameStep();
+                              },
+                            ),
                           );
                         },
                       ),
@@ -403,9 +408,12 @@ class _StartScreenState extends State<StartScreen> {
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(9),
-                              child: Image.asset(
-                                character.imagePath,
-                                fit: BoxFit.cover,
+                              child: Hero(
+                                tag: 'character_portrait_${character.name}',
+                                child: Image.asset(
+                                  character.imagePath,
+                                  fit: BoxFit.cover,
+                                ),
                               ),
                             ),
                           ),
@@ -544,9 +552,12 @@ class _CharacterCardState extends State<_CharacterCard> {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(10),
-                      child: Image.asset(
-                        widget.character.imagePath,
-                        fit: BoxFit.cover,
+                      child: Hero(
+                        tag: 'character_portrait_${widget.character.name}',
+                        child: Image.asset(
+                          widget.character.imagePath,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                   ),
