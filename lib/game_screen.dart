@@ -71,10 +71,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       initialScore = -100;
     }
 
+    final isTouch = GlobalPawCursor.of(context)?.isTouchDevice ?? false;
+
     _game = AimCatGame(
       gameDuration: duration,
       selectedCharacter: widget.selectedCat,
       gameLevel: widget.gameLevel,
+      isTouchMode: isTouch,
       onGameUpdate: (s, t, f) {
         if (mounted) {
           WidgetsBinding.instance.addPostFrameCallback((_) {

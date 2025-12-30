@@ -7,6 +7,7 @@ import 'package:flame/game.dart';
 import 'package:flame/collisions.dart';
 import 'package:flame/particles.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'start_screen.dart'; // For character data
 
 // Target configurations with icons and colors
@@ -538,6 +539,7 @@ class AimCatGame extends FlameGame
   final int gameDuration;
   final int selectedCharacter; // Character index for powers
   final String gameLevel; // Current game level/mode
+  bool isTouchMode; // If true, disable drag-to-score
   final List<Target> targets = [];
   final Random _rand = Random();
 
@@ -549,7 +551,16 @@ class AimCatGame extends FlameGame
     required this.gameLevel,
     this.onTargetHit,
     this.gameDuration = 60,
+    this.isTouchMode = false,
   });
+
+  void _updateTouchMode(PointerDeviceKind kind) {
+    if (kind == PointerDeviceKind.touch && !isTouchMode) {
+      isTouchMode = true;
+    } else if (kind == PointerDeviceKind.mouse && isTouchMode) {
+      isTouchMode = false;
+    }
+  }
 
   // Get spawn interval multiplier based on level
   double _getSpawnIntervalMultiplier() {
@@ -1585,11 +1596,14 @@ class AimCatGame extends FlameGame
 
   @override
   void onPanUpdate(DragUpdateInfo info) {
-    paw.position += info.delta.global;
+    if (!isTouchMode) {
+      paw.position += info.delta.global;
+    }
   }
 
   @override
   void onTapDown(TapDownEvent event) {
+    _updateTouchMode(event.deviceKind);
     final tapPos = event.localPosition;
     // Check if tap is on Finish button
     if (finishButton.toRect().contains(tapPos.toOffset())) {
@@ -1605,7 +1619,10 @@ class AimCatGame extends FlameGame
 
   @override
   void onMouseMove(PointerHoverInfo info) {
-    paw.position = info.eventPosition.global;
+    _updateTouchMode(PointerDeviceKind.mouse);
+    if (!isTouchMode) {
+      paw.position = info.eventPosition.global;
+    }
   }
 
   void onMouseHover(PointerHoverInfo info) {
@@ -1742,8 +1759,8 @@ class Target extends PositionComponent with TapCallbacks {
         _onHoverEnd();
       }
 
-      // Trigger hit
-      if (isOverlapping && !parentGame.isOverUI(pawPos)) {
+      // Trigger hit - Only if NOT in touch mode (which requires tapping)
+      if (!parentGame.isTouchMode && isOverlapping && !parentGame.isOverUI(pawPos)) {
         onHit(this);
       }
     }
