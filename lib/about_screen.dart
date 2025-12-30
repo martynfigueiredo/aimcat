@@ -51,7 +51,7 @@ class AboutScreen extends StatelessWidget {
                 index: 3,
                 child: _AboutSection(
                   title: 'The Mission',
-                  content: 'AimCat is designed to be the most satisfying and feline-friendly aim trainer in the galaxy. Precision, speed, and fluffiness combined.',
+                  content: 'AimCat was created as a loving homage to my children, designed to be a safe, simple, and fun experience for kids. It\'s a simple game where you tap good targets to score high and test your accuracy. This project also serves as a key piece of my professional portfolio.',
                 ),
               ),
               SizedBox(height: 24),

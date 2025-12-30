@@ -1,10 +1,10 @@
 # 🐱 AimCat
 
-A multi-platform Flutter game using Flame engine where players control a cat paw to hit targets for points.
+AimCat is a simple, kid-friendly aim trainer built with Flutter and the Flame engine. Designed for both fun and skill-building, it allows players to test their accuracy by tapping good targets while avoiding distractions.
 
 ## 🎮 About
 
-AimCat is an exciting aim training game with a playful cat theme. Move a cat paw cursor to hit various targets that appear on screen, earning points for cat-friendly items and losing points for things cats don't like!
+AimCat focuses on a playful for everyone, but specially kids. The goal is simple: control a cat paw to hit "good" targets (like hearts and stars) to score maximum points. This project was created as a loving homage to my children—the original "AimCats"—and serves as a primary showcase for my development portfolio.
 
 ## 🚀 Platforms
 
@@ -77,7 +77,7 @@ Contributions, issues, and feature requests are welcome!
 
 ## 👨‍💻 Author
 
-Created with ❤️ for cat lovers and aim training enthusiasts
+Created with ❤️ as a tribute to my children and as a showcase for my professional portfolio.
 
 ---
 

@@ -145,7 +145,7 @@ class _ObjectiveSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader('Objective'),
-        _SectionText('AimCat is a fast-paced aim trainer game. Your goal is to hit as many positive targets as possible while avoiding negative ones within the time limit.'),
+        _SectionText('AimCat is a simple and fun game primarily designed for kids. The goal is easy: just tap or click on the good targets as they appear to score as many points as you can! Try to beat your personal best or just enjoy the process.'),
         SizedBox(height: 16),
       ],
     );
