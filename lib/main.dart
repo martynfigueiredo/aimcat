@@ -52,13 +52,14 @@ class AimCatApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
-    // Modern Material 3 Theme with a deep primary color.
+    // Modern Material 3 Theme with a Google Blue seed.
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF673AB7), // Deep Purple
+      seedColor: const Color(0xFF1A73E8), // Google Blue
       brightness: Brightness.light,
+      surface: Colors.white,
     );
     final darkColorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF673AB7),
+      seedColor: const Color(0xFF1A73E8),
       brightness: Brightness.dark,
     );
 
@@ -70,9 +71,11 @@ class AimCatApp extends StatelessWidget {
         useMaterial3: true,
         colorScheme: colorScheme,
         textTheme: GoogleFonts.outfitTextTheme(),
+        scaffoldBackgroundColor: Colors.white,
         appBarTheme: AppBarTheme(
           centerTitle: true,
-          backgroundColor: colorScheme.surface,
+          backgroundColor: Colors.white,
+          foregroundColor: colorScheme.onSurface,
           elevation: 0,
         ),
       ),
@@ -130,25 +133,22 @@ class HomeScreen extends StatelessWidget {
           children: [
             DrawerHeader(
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
-                gradient: LinearGradient(
-                  colors: [
-                    Theme.of(context).colorScheme.primary,
-                    Theme.of(context).colorScheme.secondary,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: Theme.of(context).colorScheme.primaryContainer,
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
               ),
-              child: const Column(
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.catching_pokemon, color: Colors.white, size: 48),
-                  SizedBox(height: 8),
+                  Icon(
+                    Icons.catching_pokemon, 
+                    color: Theme.of(context).colorScheme.primary, 
+                    size: 48
+                  ),
+                  const SizedBox(height: 8),
                   Text(
                     'AimCat Menu',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),

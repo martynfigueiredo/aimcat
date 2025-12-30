@@ -137,7 +137,7 @@ class TargetConfigs {
     // High value (50 pts)
     TargetConfig(
       icon: Icons.diamond,
-      color: Color(0xFF9C27B0),
+      color: Color(0xFF1976D2), // Google Blue (darker)
       value: 50,
       duration: 0.8,
       isPositive: true,
@@ -181,7 +181,7 @@ class TargetConfigs {
     ),
     TargetConfig(
       icon: Icons.coronavirus,
-      color: Color(0xFF7B1FA2),
+      color: Color(0xFFD32D2D), // Google Red
       value: -30,
       duration: 2.2,
       isPositive: false,
@@ -543,6 +543,7 @@ class AimCatGame extends FlameGame
   bool isTouchMode; // If true, disable drag-to-score
   final List<Target> targets = [];
   final Random _rand = Random();
+  int _clocksSpawned = 0;
 
   AimCatGame({
     required this.onGameUpdate,
@@ -880,6 +881,7 @@ class AimCatGame extends FlameGame
     timeLeft = gameDuration.toDouble();
     _spawnTimer = 0;
     _secondsAccumulator = 0;
+    _clocksSpawned = 0;
     
     scoreText.text = 'Score: 0';
     timerText.text = 'Time: $gameDuration';
@@ -928,12 +930,25 @@ class AimCatGame extends FlameGame
       }
     } else {
       // Standard logic
-      candidates = isPositive ? TargetConfigs.positive : TargetConfigs.negative;
+      if (isPositive) {
+        candidates = List.from(TargetConfigs.positive);
+        // Limit clocks to 3 per game
+        if (_clocksSpawned >= 3) {
+          candidates.removeWhere((t) => t.icon == Icons.schedule);
+        }
+      } else {
+        candidates = List.from(TargetConfigs.negative);
+      }
     }
 
     if (candidates.isEmpty) return;
 
     final config = candidates[_rand.nextInt(candidates.length)];
+    
+    // Track clock spawns
+    if (config.icon == Icons.schedule) {
+      _clocksSpawned++;
+    }
     
     // Calculate total size scale
     final sizeModifier = _getSizeMultiplier();
