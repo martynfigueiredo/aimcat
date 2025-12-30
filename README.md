@@ -16,9 +16,9 @@ AimCat focuses on a playful for everyone, but specially kids. The goal is simple
 
 ## 🎯 Game Modes
 
-- **Baby (30s)**: The gentlest mode. Only positive targets appear, they stay on screen longer, and every hit gives a massive bonus! No penalties, no clocks—just pure tapping joy.
-- **Toddler (30s)**: A step up. Bad items appear but carry no penalty. Good items are worth double points. No clocks or complex combos.
-- **Grandma (30s)**: Targets are 30% larger for better visibility. No clocks or combos. Reduced scoring for a relaxed pace.
+- **Baby (30s)**: The gentlest mode. Only positive targets appear, they stay on screen longer, and every hit gives a bonus! Reduced scoring for pure tapping joy.
+- **Toddler (30s)**: A step up. Bad items carry no penalty. Good items stay on screen 2x longer with balanced scoring. No clocks or complex combos.
+- **Grandma (30s)**: Targets are 30% larger and stay on screen 2x longer for better visibility. No clocks or combos. Reduced scoring for a relaxed pace.
 - **SpeedRun (10s)**: A quick blitz where targets appear 4x faster. Precision and speed are key!
 - **Hacker (10s)**: The ultimate challenge. Targets appear 8x faster and disappear almost instantly (64x speed). Everything is worth 200 points, but you start with a -100 point penalty!
 - **Marathon (90s)**: A standard test of endurance and focus.

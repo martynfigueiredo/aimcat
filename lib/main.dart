@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'dart:math';
 
 import 'start_screen.dart';
@@ -68,7 +69,7 @@ class AimCatApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: colorScheme,
-        fontFamily: 'Inter',
+        textTheme: GoogleFonts.outfitTextTheme(),
         appBarTheme: AppBarTheme(
           centerTitle: true,
           backgroundColor: colorScheme.surface,
@@ -78,7 +79,7 @@ class AimCatApp extends StatelessWidget {
       darkTheme: ThemeData(
         useMaterial3: true,
         colorScheme: darkColorScheme,
-        fontFamily: 'Inter',
+        textTheme: GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme),
         appBarTheme: AppBarTheme(
           centerTitle: true,
           backgroundColor: darkColorScheme.surface,
@@ -103,10 +104,7 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'AimCat Home',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: null, // Title removed as requested
         leading: Builder(
           builder: (context) => IconButton(
             icon: const Icon(Icons.menu),
@@ -274,36 +272,160 @@ class _HomeScreenBody extends StatelessWidget {
                 const _FloatingTitle(),
                 const SizedBox(height: 8),
                 GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      AimCatPageRoute(
-                        page: const StartScreen(),
-                      ),
-                    );
-                  },
-                  child: Column(
+                  onTap: () => Navigator.push(
+                    context,
+                    AimCatPageRoute(page: const StartScreen()),
+                  ),
+                  child: Hero(
+                    tag: 'main_cat_image',
+                    child: Image.asset(
+                      'assets/images/MainScreenCat.png',
+                      width: imageSize,
+                      height: imageSize,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Aligned buttons row
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Hero(
-                        tag: 'main_cat_image',
-                        child: Image.asset(
-                          'assets/images/MainScreenCat.png',
-                          width: imageSize,
-                          height: imageSize,
-                          fit: BoxFit.contain,
+                      // Simplified Rules
+                      _HomeActionButton(
+                        icon: Icons.help_outline,
+                        label: 'Quick Guide',
+                        color: Theme.of(context).colorScheme.secondary,
+                        onPressed: () => Navigator.push(
+                          context,
+                          AimCatPageRoute(page: const HelpScreen(simplified: true)),
                         ),
                       ),
-                      const SizedBox(height: 24),
-                      const _PulsingPlayButton(),
+                      const SizedBox(width: 32),
+                      // Play Button
+                      _HomeActionButton(
+                        icon: Icons.play_arrow,
+                        label: 'Play',
+                        color: Theme.of(context).colorScheme.primary,
+                        isLarge: true,
+                        onPressed: () => Navigator.push(
+                          context,
+                          AimCatPageRoute(page: const StartScreen()),
+                        ),
+                      ),
+                      const SizedBox(width: 32),
+                      // Complete Rules
+                      _HomeActionButton(
+                        icon: Icons.menu_book,
+                        label: 'Full Guide',
+                        color: Theme.of(context).colorScheme.tertiary,
+                        onPressed: () => Navigator.push(
+                          context,
+                          AimCatPageRoute(page: const HelpScreen(simplified: false)),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 32),
               ],
             ),
           ),
         );
       },
+    );
+  }
+}
+
+// Unified Home Action Button with pulsing effect
+class _HomeActionButton extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onPressed;
+  final bool isLarge;
+
+  const _HomeActionButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onPressed,
+    this.isLarge = false,
+  });
+
+  @override
+  State<_HomeActionButton> createState() => _HomeActionButtonState();
+}
+
+class _HomeActionButtonState extends State<_HomeActionButton> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = widget.isLarge ? 80.0 : 60.0;
+    final iconSize = widget.isLarge ? 40.0 : 28.0;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ScaleTransition(
+          scale: _scaleAnimation,
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: widget.color.withOpacity(0.15),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: widget.color.withOpacity(0.6),
+                width: widget.isLarge ? 4 : 3,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: widget.color.withOpacity(0.2),
+                  blurRadius: 15,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: Icon(widget.icon, color: widget.color, size: iconSize),
+              onPressed: widget.onPressed,
+              tooltip: widget.label,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          widget.label,
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                fontWeight: widget.isLarge ? FontWeight.bold : FontWeight.w500,
+                color: widget.color.withOpacity(0.9),
+                fontSize: widget.isLarge ? 16 : 14,
+              ),
+        ),
+      ],
     );
   }
 }
@@ -351,72 +473,11 @@ class _FloatingTitleState extends State<_FloatingTitle> with SingleTickerProvide
           color: Theme.of(context).colorScheme.primary,
           shadows: [
             Shadow(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
               blurRadius: 12,
               offset: const Offset(0, 3),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PulsingPlayButton extends StatefulWidget {
-  const _PulsingPlayButton();
-
-  @override
-  State<_PulsingPlayButton> createState() => _PulsingPlayButtonState();
-}
-
-class _PulsingPlayButtonState extends State<_PulsingPlayButton> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
-    _animation = Tween<double>(begin: 1.0, end: 1.05).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: _animation,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 48,
-          vertical: 20,
-        ),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primaryContainer,
-          borderRadius: BorderRadius.circular(32),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-              blurRadius: 20,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: Text(
-          'Click to Play',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
-                fontWeight: FontWeight.w700,
-              ),
         ),
       ),
     );

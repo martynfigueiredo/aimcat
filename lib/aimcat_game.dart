@@ -8,6 +8,7 @@ import 'package:flame/collisions.dart';
 import 'package:flame/particles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'start_screen.dart'; // For character data
 
 // Target configurations with icons and colors
@@ -69,7 +70,7 @@ class TargetConfigs {
       name: 'Heart',
     ),
     TargetConfig(
-      icon: Icons.text_fields,
+      icon: IconData(0x41, fontFamily: null), // Literal 'A'
       color: Color(0xFF2196F3),
       value: 10,
       duration: 2.0,
@@ -585,11 +586,13 @@ class AimCatGame extends FlameGame
       case 'Baby':
         return 4.0; // 2x faster than previous 8.0
       case 'Toddler':
-        return 1.0; // 2x faster than previous 2.0
+        return 2.0; // Stay 2x longer
+      case 'Grandma':
+        return 1.0; // Stay 2x longer than default (0.5)
       case 'Hacker':
         return 0.015625; // 2x faster than previous 0.03125 (64x total speed)
       default:
-        return 0.5; // 2x faster than previous 1.0
+        return 0.5; // Base speed
     }
   }
 
@@ -602,9 +605,10 @@ class AimCatGame extends FlameGame
           return 1; // Always worth 1
         case 'Toddler':
         case 'Sayajin':
-          return config.value * 2; // Worth 2x
+          // Toddler gets 1.6x (2x * 0.8), Sayajin stays at 2x
+          return (config.value * (gameLevel == 'Toddler' ? 1.6 : 2.0)).round();
         case 'Grandma':
-          return (config.value * 0.2).round(); // Worth 20%
+          return (config.value * 0.16).round(); // Reduced from 20% to 16% (20% reduction)
         case 'Hacker':
           return 200; // Fixed value
         default:
@@ -703,7 +707,8 @@ class AimCatGame extends FlameGame
   // Get size multiplier for character (Grandma only)
   double _getSizeMultiplier() {
     final character = characters[selectedCharacter];
-    return character.name == 'Grandma' ? 1.3 : 1.0;
+    double base = character.name == 'Grandma' ? 1.3 : 1.0;
+    return base * 1.2; // 20% global increase
   }
 
   @override
@@ -731,8 +736,8 @@ class AimCatGame extends FlameGame
 
     // Score panel background
     final panelPadding = 8.0 * scaleFactor;
-    final panelWidth = isMobile ? 220.0 * scaleFactor : 280.0 * scaleFactor; // Wider panel
-    final panelHeight = fontSize * 5.5;
+    final panelWidth = isMobile ? 250.0 * scaleFactor : 300.0 * scaleFactor; 
+    final panelHeight = fontSize * 7.5;
     add(
       ScorePanel(
         position: Vector2(uiPadding - panelPadding, uiPadding - panelPadding),
@@ -1000,9 +1005,9 @@ class AimCatGame extends FlameGame
       }
     }
     
-    // Apply Baby level fixed +10 bonus per hit (on top of the base 1 point)
+    // Apply Baby level fixed +8 bonus per hit (Reduced from +10)
     if (gameLevel == 'Baby') {
-      value += 10;
+      value += 8;
     }
     
     final hitPosition = target.position + target.size / 2;
@@ -1036,7 +1041,7 @@ class AimCatGame extends FlameGame
           comboText.text = '$comboLevel x$combo (+$bonus)';
           comboText.textRenderer = TextPaint(
             style: TextStyle(
-              fontSize: isSuper ? 24 : 20,
+              fontSize: (isSuper ? 26 : 22) * scaleFactor,
               color: isSuper ? Colors.deepOrange : Colors.orangeAccent,
               fontWeight: FontWeight.bold,
             ),
@@ -1350,7 +1355,7 @@ class AimCatGame extends FlameGame
       position: position.clone(),
       anchor: Anchor.center,
       textRenderer: TextPaint(
-        style: TextStyle(
+        style: GoogleFonts.outfit(
           fontSize: 28,
           fontWeight: FontWeight.bold,
           color: color,
@@ -1397,7 +1402,7 @@ class AimCatGame extends FlameGame
       position: position.clone(),
       anchor: Anchor.center,
       textRenderer: TextPaint(
-        style: TextStyle(
+        style: GoogleFonts.outfit(
           fontSize: 32,
           fontWeight: FontWeight.bold,
           color: const Color(0xFFFF5252),

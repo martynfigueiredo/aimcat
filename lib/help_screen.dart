@@ -2,25 +2,28 @@ import 'package:flutter/material.dart';
 import 'animation_utils.dart';
 
 class HelpScreen extends StatelessWidget {
-  const HelpScreen({super.key});
+  final bool simplified;
+  const HelpScreen({super.key, this.simplified = false});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Game Guide & Instructions')),
-      body: const SparkleBackground(
+      appBar: AppBar(title: Text(simplified ? 'Quick Guide' : 'Game Guide & Instructions')),
+      body: SparkleBackground(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              StaggeredEntry(index: 0, child: _ObjectiveSection()),
-              StaggeredEntry(index: 1, child: _HowToPlaySection()),
-              StaggeredEntry(index: 2, child: _TargetsSection()),
-              StaggeredEntry(index: 3, child: _ComboSystemSection()),
-              StaggeredEntry(index: 4, child: _LevelRulesSection()),
-              StaggeredEntry(index: 5, child: _CharacterPowersSection()),
-              SizedBox(height: 32),
+              const StaggeredEntry(index: 0, child: _ObjectiveSection()),
+              const StaggeredEntry(index: 1, child: _HowToPlaySection()),
+              if (!simplified) ...[
+                const StaggeredEntry(index: 2, child: _TargetsSection()),
+                const StaggeredEntry(index: 3, child: _ComboSystemSection()),
+                const StaggeredEntry(index: 4, child: _LevelRulesSection()),
+                const StaggeredEntry(index: 5, child: _CharacterPowersSection()),
+              ],
+              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -212,9 +215,9 @@ class _LevelRulesSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _SectionHeader('Level Rules'),
-        _LevelInfo('Baby', 'Only good items. They stay longer and give extra bonus points!'),
-        _LevelInfo('Toddler', 'Good items give double points. Bad items carry no penalty!'),
-        _LevelInfo('Grandma', 'Targets are 30% larger for better visibility. Relaxed pace.'),
+        _LevelInfo('Baby', 'Only good items. They stay longer. Reduced scoring for fun.'),
+        _LevelInfo('Toddler', 'Good items stay 2x longer. Balanced points, no bad penalties!'),
+        _LevelInfo('Grandma', 'Targets are 30% larger and stay 2x longer. Reduced scoring.'),
         _LevelInfo('SpeedRun', 'Quick 10s blitz! Targets appear 4x faster.'),
         _LevelInfo('Sayajin', 'High stakes. Start with 100pts. Good=2x, Bad=50% penalty.'),
         _LevelInfo('Hacker', 'Madness! Start with -100pts. Instant 64x speed. All hit=200pts.'),

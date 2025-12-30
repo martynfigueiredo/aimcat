@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'level_selection_screen.dart';
 import 'package:flutter/material.dart';
 import 'animation_utils.dart';
+import 'help_screen.dart';
 
 // Formatter to force uppercase
 class UpperCaseTextFormatter extends TextInputFormatter {
@@ -464,6 +465,7 @@ class _StartScreenState extends State<StartScreen> {
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
+                    const SizedBox(height: 24),
                     const SizedBox(height: 24),
                     // Start button
                     SizedBox(
