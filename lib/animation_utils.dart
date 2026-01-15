@@ -9,20 +9,22 @@ class AimCatPageRoute<T> extends PageRouteBuilder<T> {
   AimCatPageRoute({required this.page})
       : super(
           pageBuilder: (context, animation, secondaryAnimation) => page,
-          transitionDuration: const Duration(milliseconds: 400),
-          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionDuration: const Duration(milliseconds: 450),
+          reverseTransitionDuration: const Duration(milliseconds: 350),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            final zoomAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
+            // Smoother zoom with fastOutSlowIn - starts fast, ends gently
+            final zoomAnimation = Tween<double>(begin: 0.92, end: 1.0).animate(
               CurvedAnimation(
                 parent: animation,
-                curve: Curves.easeOutBack,
+                curve: Curves.fastOutSlowIn,
               ),
             );
 
+            // Smooth fade with easeOut for a gentle appearance
             final fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
               CurvedAnimation(
                 parent: animation,
-                curve: Curves.easeIn,
+                curve: Curves.easeOut,
               ),
             );
 
