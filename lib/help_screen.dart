@@ -59,7 +59,11 @@ class _SectionText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(fontSize: 16, height: 1.5),
+      style: TextStyle(
+        fontSize: 16, 
+        height: 1.6, 
+        color: Theme.of(context).colorScheme.onSurface,
+      ),
     );
   }
 }
@@ -72,12 +76,19 @@ class _ListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: Theme.of(context).colorScheme.secondary),
-          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(icon, size: 18, color: Theme.of(context).colorScheme.secondary),
+          ),
+          const SizedBox(width: 12),
           Expanded(child: _SectionText(text)),
         ],
       ),

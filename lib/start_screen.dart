@@ -518,19 +518,26 @@ class _CharacterCardState extends State<_CharacterCard> {
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          // Reduced padding to use more space for content ("No free space")
-          padding: const EdgeInsets.all(8), 
+          // Better padding for more breathing room
+          padding: const EdgeInsets.all(14), 
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: widget.isSelected
                   ? primaryColor
                   : _isHovered
-                  ? primaryColor.withValues(alpha: 0.6)
-                  : Colors.transparent,
-              width: 3,
+                  ? primaryColor.withValues(alpha: 0.5)
+                  : colorScheme.outline.withValues(alpha: 0.15),
+              width: widget.isSelected ? 3 : 2,
             ),
             color: colorScheme.surfaceContainerHighest,
+            boxShadow: widget.isSelected || _isHovered ? [
+              BoxShadow(
+                color: primaryColor.withValues(alpha: 0.1),
+                blurRadius: 12,
+                spreadRadius: 2,
+              ),
+            ] : null,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -583,18 +590,18 @@ class _CharacterCardState extends State<_CharacterCard> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 8),
-                        // Bigger XP Stars
+                        // Softer Amber XP Stars
                         Row(
                           children: List.generate(
                             5,
                             (index) => Icon(
                               index < widget.character.xp
-                                  ? Icons.star
-                                  : Icons.star_border,
-                              size: 24, // Bigger Stars
+                                  ? Icons.star_rounded
+                                  : Icons.star_outline_rounded,
+                              size: 22,
                               color: index < widget.character.xp
-                                  ? const Color(0xFFFFD700)
-                                  : colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                                  ? const Color(0xFFF59E0B) // Warmer amber
+                                  : colorScheme.onSurfaceVariant.withValues(alpha: 0.25),
                             ),
                           ),
                         ),
@@ -605,24 +612,28 @@ class _CharacterCardState extends State<_CharacterCard> {
               ),
               const SizedBox(height: 12),
               
-              // Power Section - Bigger
+              // Power Section - Softer background
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
+                  color: primaryColor.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: primaryColor.withValues(alpha: 0.15),
+                    width: 1,
+                  ),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.flash_on, size: 20, color: primaryColor), // Bigger Icon
+                    Icon(Icons.flash_on_rounded, size: 18, color: primaryColor),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         widget.character.power,
                         style: TextStyle(
-                          fontSize: 14, // Bigger Text
-                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
                           color: primaryColor,
                         ),
                         maxLines: 2,
@@ -634,21 +645,21 @@ class _CharacterCardState extends State<_CharacterCard> {
               ),
               const SizedBox(height: 8),
               
-              // Good at / Bad at - Bigger
+              // Good at / Bad at - Softer colors
               Row(
                 children: [
                   Expanded(
                     child: Row(
                       children: [
-                        const Icon(Icons.thumb_up, size: 18, color: Color(0xFF4CAF50)), // Bigger Icon
+                        const Icon(Icons.thumb_up_rounded, size: 16, color: Color(0xFF22C55E)), // Softer green
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             widget.character.goodAt,
                             style: const TextStyle(
-                              fontSize: 13, // Bigger Text
-                              color: Color(0xFF4CAF50),
-                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: Color(0xFF22C55E),
+                              fontWeight: FontWeight.w600,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -657,19 +668,19 @@ class _CharacterCardState extends State<_CharacterCard> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Row(
                       children: [
-                        const Icon(Icons.thumb_down, size: 18, color: Color(0xFFE57373)), // Bigger Icon
+                        const Icon(Icons.thumb_down_rounded, size: 16, color: Color(0xFFF87171)), // Softer red
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
                             widget.character.badAt,
                             style: const TextStyle(
-                              fontSize: 13, // Bigger Text
-                              color: Color(0xFFE57373),
-                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: Color(0xFFF87171),
+                              fontWeight: FontWeight.w600,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

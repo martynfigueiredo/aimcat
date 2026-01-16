@@ -81,7 +81,7 @@ class LevelSelectionScreen extends StatefulWidget {
 }
 
 class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
-  Map<String, int> _highScores = {};
+  Map<String, HighScoreData?> _highScores = {};
 
   @override
   void initState() {
@@ -190,7 +190,8 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
                             itemCount: gameLevels.length,
                             itemBuilder: (context, index) {
                               final level = gameLevels[index];
-                              final score = _highScores[level.name] ?? 0;
+                              final data = _highScores[level.name];
+                              final score = data?.score ?? 0;
                               return StaggeredEntry(
                                 index: index,
                                 child: _buildLevelCard(context, level, isMobile, score),
@@ -252,47 +253,51 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
                     },
                   ),
                 ),
-                // High Score Badge (if any)
-                if (highScore > 0)
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.orangeAccent,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.3),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
+                  // High Score Badge (if any)
+                  if (highScore > 0)
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFF59E0B), Color(0xFFD97706)], // Warm amber gradient
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.emoji_events, size: 14, color: Colors.white),
-                          const SizedBox(width: 4),
-                          Text(
-                            '$highScore pts',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.emoji_events_rounded, size: 16, color: Colors.white),
+                            const SizedBox(width: 4),
+                            Text(
+                              '$highScore pts',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
               ],
             ),
           ),
           // Text area
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -301,7 +306,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
                   level.name,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
-                    fontSize: 22, // Bigger title
+                    fontSize: 20,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -312,8 +317,8 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen> {
                     level.description,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontSize: 16, // Bigger description
-                      height: 1.3,
+                      fontSize: 14,
+                      height: 1.4,
                     ),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
@@ -387,10 +392,17 @@ class _HoverableCardState extends State<_HoverableCard> with SingleTickerProvide
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: _isHovered ? primaryColor : Colors.transparent,
+              color: _isHovered ? primaryColor.withValues(alpha: 0.5) : Colors.transparent,
               width: 3,
             ),
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            color: Theme.of(context).colorScheme.surface,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           clipBehavior: Clip.antiAlias,
             child: widget.child,

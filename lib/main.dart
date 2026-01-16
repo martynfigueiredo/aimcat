@@ -52,15 +52,17 @@ class AimCatApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
-    // Modern Material 3 Theme with a Google Blue seed.
+    // Softer, warmer color palette for better eye comfort
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF1A73E8), // Google Blue
+      seedColor: const Color(0xFF3B82F6), // Softer blue
       brightness: Brightness.light,
-      surface: Colors.white,
+      surface: const Color(0xFFFAFAFA), // Warm white
+      surfaceContainerHighest: const Color(0xFFF1F5F9), // Soft gray
     );
     final darkColorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF1A73E8),
+      seedColor: const Color(0xFF3B82F6),
       brightness: Brightness.dark,
+      surface: const Color(0xFF1E1E2E), // Softer dark
     );
 
     return MaterialApp(
@@ -71,12 +73,29 @@ class AimCatApp extends StatelessWidget {
         useMaterial3: true,
         colorScheme: colorScheme,
         textTheme: GoogleFonts.outfitTextTheme(),
-        scaffoldBackgroundColor: Colors.white,
+        scaffoldBackgroundColor: const Color(0xFFFAFAFA),
         appBarTheme: AppBarTheme(
           centerTitle: true,
-          backgroundColor: Colors.white,
+          backgroundColor: const Color(0xFFFAFAFA),
           foregroundColor: colorScheme.onSurface,
           elevation: 0,
+          scrolledUnderElevation: 1,
+        ),
+        cardTheme: CardThemeData(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          color: colorScheme.surface,
+          surfaceTintColor: Colors.transparent,
+        ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
         ),
       ),
       darkTheme: ThemeData(
@@ -87,6 +106,23 @@ class AimCatApp extends StatelessWidget {
           centerTitle: true,
           backgroundColor: darkColorScheme.surface,
           elevation: 0,
+          scrolledUnderElevation: 1,
+        ),
+        cardTheme: CardThemeData(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          color: darkColorScheme.surface,
+          surfaceTintColor: Colors.transparent,
+        ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
         ),
       ),
       home: const HomeScreen(),
@@ -383,8 +419,8 @@ class _HomeActionButtonState extends State<_HomeActionButton> with SingleTickerP
 
   @override
   Widget build(BuildContext context) {
-    final size = widget.isLarge ? 80.0 : 60.0;
-    final iconSize = widget.isLarge ? 40.0 : 28.0;
+    final size = widget.isLarge ? 88.0 : 64.0;
+    final iconSize = widget.isLarge ? 44.0 : 30.0;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -395,17 +431,17 @@ class _HomeActionButtonState extends State<_HomeActionButton> with SingleTickerP
             width: size,
             height: size,
             decoration: BoxDecoration(
-              color: widget.color.withOpacity(0.15),
+              color: widget.color.withOpacity(0.12),
               shape: BoxShape.circle,
               border: Border.all(
-                color: widget.color.withOpacity(0.6),
-                width: widget.isLarge ? 4 : 3,
+                color: widget.color.withOpacity(0.5),
+                width: widget.isLarge ? 3 : 2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: widget.color.withOpacity(0.2),
-                  blurRadius: 15,
-                  spreadRadius: 2,
+                  color: widget.color.withOpacity(0.15),
+                  blurRadius: 20,
+                  spreadRadius: 4,
                 ),
               ],
             ),
@@ -416,13 +452,14 @@ class _HomeActionButtonState extends State<_HomeActionButton> with SingleTickerP
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Text(
           widget.label,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
                 fontWeight: widget.isLarge ? FontWeight.bold : FontWeight.w500,
-                color: widget.color.withOpacity(0.9),
+                color: widget.color.withOpacity(0.85),
                 fontSize: widget.isLarge ? 16 : 14,
+                letterSpacing: 0.3,
               ),
         ),
       ],

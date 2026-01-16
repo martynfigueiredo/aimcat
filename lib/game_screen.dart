@@ -129,14 +129,23 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   void _showFinishModal(int finalScore, double remainingTime) async {
+    // Get character name
+    final String characterName = characters[widget.selectedCat].name;
+    final int timeUsed = (_getDuration() - remainingTime.toInt()).clamp(0, _getDuration());
+    final double accuracy = finalScore > 0 ? (finalScore / (timeUsed > 0 ? timeUsed : 1)).clamp(0, 100) : 0;
+
     // Save score and check if it's a new record
-    final bool isNewRecord = await HighScoreService.saveScore(widget.gameLevel, finalScore);
+    final bool isNewRecord = await HighScoreService.saveScore(
+      level: widget.gameLevel,
+      score: finalScore,
+      accuracy: accuracy,
+      timeUsed: timeUsed,
+      characterName: characterName,
+    );
+
     if (isNewRecord) {
       highScore = finalScore;
     }
-
-    final int timeUsed = (_getDuration() - remainingTime.toInt()).clamp(0, _getDuration());
-    final double accuracy = finalScore > 0 ? (finalScore / (timeUsed > 0 ? timeUsed : 1)).clamp(0, 100) : 0;
     
     if (!mounted) return;
 
@@ -260,13 +269,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           color: color,
           shape: BoxShape.circle,
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.8),
+            color: Colors.white.withValues(alpha: 0.9),
             width: 3,
           ),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: 0.4),
-              blurRadius: 8,
+              color: color.withValues(alpha: 0.3),
+              blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
@@ -284,18 +293,28 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final colorScheme = Theme.of(ctx).colorScheme;
     final textColor = isHighlighted ? Colors.orangeAccent : colorScheme.primary;
     
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            Icon(icon, color: isHighlighted ? Colors.orangeAccent : colorScheme.primary, size: 32), // Bigger Icon
-            const SizedBox(width: 12),
-            Text(label, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 22)), // Bigger Label
-          ],
-        ),
-        Text(value, style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 26)), // Bigger Value
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: isHighlighted ? Colors.orangeAccent : colorScheme.primary, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Text(label, style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 18, fontWeight: FontWeight.w500)),
+            ],
+          ),
+          Text(value, style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 22)),
+        ],
+      ),
     );
   }
 
